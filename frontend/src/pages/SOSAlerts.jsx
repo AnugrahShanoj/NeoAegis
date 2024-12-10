@@ -1,0 +1,192 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Bell, History, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import LayoutWrapper from "../components/LayoutWrapper";
+const SOSAlerts = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [customMessage, setCustomMessage] = useState("");
+  const [filter, setFilter] = useState("all");
+  // Sample alert history data
+  const alertHistory = [
+    {
+      id: 1,
+      timestamp: "2024-03-15T14:30:00",
+      location: "123 Main St, City",
+      status: "resolved",
+      message: "Medical emergency, need immediate assistance",
+    },
+    {
+      id: 2,
+      timestamp: "2024-03-14T09:15:00",
+      location: "456 Park Ave, Town",
+      status: "acknowledged",
+      message: "Feeling unsafe, requesting help",
+    },
+  ];
+  const handleSendAlert = () => {
+    toast.success("SOS Alert sent successfully!");
+    setCustomMessage("");
+    setIsDialogOpen(false);
+  };
+  const filteredAlerts = alertHistory.filter(
+    (alert) => filter === "all" || alert.status === filter
+  );
+  return (
+    <div className="flex min-h-screen bg-neutral-300/40">
+      <DashboardSidebar />
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <LayoutWrapper>
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-3xl font-bold text-neutral-900 mb-2">SOS Alerts</h1>
+            <p className="text-neutral-600">
+              Use the SOS feature to alert your emergency contacts during critical situations.
+            </p>
+          </motion.div>
+          {/* Trigger Alert Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Card className='bg-white'>
+              <CardHeader>
+                <CardTitle>Send SOS Alert</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  placeholder="Add a custom message (optional)"
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-6 text-lg"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <Bell className="mr-2 h-5 w-5" />
+                  SOS Alert
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+          {/* Alert History Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className='bg-white'>
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Alert History
+                </CardTitle>
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent className='bg-white'>
+                    <SelectItem value="all">All Alerts</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredAlerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="p-4 rounded-lg border bg-white hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-2">
+                          <p className="text-sm text-neutral-500">
+                            {new Date(alert.timestamp).toLocaleString()}
+                          </p>
+                          <p className="font-medium">{alert.message}</p>
+                          <div className="flex items-center gap-2 text-sm text-neutral-600">
+                            <MapPin className="h-4 w-4" />
+                            {alert.location}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              alert.status === "resolved"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredAlerts.length === 0 && (
+                    <p className="text-center text-neutral-500 py-8">
+                      No alerts found
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+        </LayoutWrapper>
+        {/* Confirmation Dialog */}
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm SOS Alert</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to send an SOS alert? This will immediately notify
+                all your emergency contacts.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700"
+                onClick={handleSendAlert}
+              >
+                Send Alert
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </main>
+    </div>
+  );
+};
+export default SOSAlerts;
