@@ -1,10 +1,15 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Shield, GraduationCap, Users, Heart, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import PremiumFeatureCard from "@/components/payment/PremiumFeatureCard";
+import PremiumPriceTag from "@/components/payment/PremiumPriceTag";
+import PremiumHeader from "@/components/payment/PremiumHeader";
+
 const Payment = () => {
   const navigate = useNavigate();
+
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -14,21 +19,22 @@ const Payment = () => {
       document.body.appendChild(script);
     });
   };
-  const handlePayment = async (plan) => {
+
+  const handlePayment = async () => {
     const res = await loadRazorpay();
     if (!res) {
       toast.error('Razorpay SDK failed to load');
       return;
     }
-    // This would typically come from your backend
+
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: plan.price * 100, // amount in paisa
+      amount: 59900,
       currency: "INR",
-      name: "Safety App",
-      description: `${plan.name} Plan Subscription`,
+      name: "NeoAegis Safety",
+      description: "Lifetime Safety Subscription",
       handler: function (response) {
-        toast.success('Payment successful!');
+        toast.success('Payment successful! Thank you for your contribution.');
         navigate('/dashboard');
       },
       prefill: {
@@ -36,94 +42,129 @@ const Payment = () => {
         email: "user@example.com",
       },
       theme: {
-        color: "#0284c7",
+        color: "#EA2B1F",
       },
     };
+
     const paymentObject = new window.Razorpay(options);
     paymentObject.open();
   };
-  const plans = [
+
+  const features = [
     {
-      name: "Basic",
-      price: 499,
-      features: [
-        "Basic SOS alerts",
-        "Emergency contacts",
-        "24/7 support",
-      ],
+      icon: Shield,
+      title: "24/7 Emergency Response",
+      description: "Instant help when you need it most"
     },
     {
-      name: "Premium",
-      price: 999,
-      features: [
-        "All Basic features",
-        "Location tracking",
-        "Safety check-ins",
-        "Priority support",
-      ],
+      icon: Users,
+      title: "Trusted Emergency Contacts",
+      description: "Your safety network, always connected"
     },
     {
-      name: "Enterprise",
-      price: 1999,
-      features: [
-        "All Premium features",
-        "Custom alerts",
-        "Team management",
-        "API access",
-        "Dedicated support",
-      ],
+      icon: GraduationCap,
+      title: "Support Children's Education",
+      description: "Help build a brighter future"
     },
+    {
+      icon: Heart,
+      title: "Help Elderly Care Programs",
+      description: "Support dignified aging"
+    }
   ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
-          <p className="text-xl text-gray-600">Select the perfect plan for your safety needs</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
-            <Card key={plan.name} className="relative hover:shadow-xl transition-shadow duration-300">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-center">{plan.name}</CardTitle>
-                <CardDescription className="text-center text-3xl font-bold text-secondary">
-                  ₹{plan.price}
-                  <span className="text-sm text-gray-500 font-normal">/month</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center">
-                      <svg
-                        className="h-5 w-5 text-green-500 mr-2"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full bg-secondary hover:bg-red-700"
-                  onClick={() => handlePayment(plan)}
+    <div className="min-h-screen bg-[#FAFAF8] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Premium animated background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            background: "linear-gradient(225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%)",
+          }}
+          className="absolute -top-1/2 -right-1/2 w-full h-full rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            background: "linear-gradient(to right, #ee9ca7, #ffdde1)",
+          }}
+          className="absolute -bottom-1/2 -left-1/2 w-full h-full rounded-full blur-3xl"
+        />
+      </div>
+
+      <div className="max-w-4xl mx-auto relative">
+        <PremiumHeader />
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="glass-panel rounded-2xl p-8 relative overflow-hidden"
+        >
+          <div className="relative">
+            <PremiumPriceTag />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {features.map((feature, index) => (
+                <PremiumFeatureCard key={index} {...feature} />
+              ))}
+            </div>
+
+            <div className="text-center">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  onClick={handlePayment}
+                  className="button-secondary w-full md:w-auto md:px-12 py-6 text-lg relative overflow-hidden group"
                 >
-                  Subscribe Now
+                  <span className="relative z-10 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    Subscribe Now
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/80 to-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+              </motion.div>
+              <p className="mt-4 text-sm text-neutral-600 flex items-center justify-center gap-2">
+                <Shield className="w-4 h-4" />
+                Secure payment powered by Razorpay
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mt-8 text-center text-sm text-neutral-600"
+        >
+          <p>
+            By subscribing, you agree to our Terms of Service and Privacy Policy.
+            Your contribution directly supports our charitable initiatives.
+          </p>
+        </motion.div>
       </div>
     </div>
   );
 };
+
 export default Payment;

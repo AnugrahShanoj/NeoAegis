@@ -4,6 +4,7 @@ const passport=require('passport')
 
 // Import Controllers
 const userController=require('../Controller/userController')
+const paymentController=require('../Controller/paymentController')
 
 // Create a router using express router
 const router=express.Router()
@@ -17,6 +18,13 @@ router.post('/register',userController.registerAPI)
     router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
     // Callback route after successful Google login
     router.get('/auth/google/callback',passport.authenticate('google', { failureRedirect: '/login' }),userController.googleAuthCallback);
+
+
+// 3 Route for handling payment gateway
+    // Route to create an order
+    router.post('/payment/createOrder', paymentController.createOrder);
+    // Route to verify payment
+    router.post('/payment/verifyPayment', paymentController.verifyPayment);
 
 
 

@@ -55,6 +55,7 @@ export default {
       animation: {
         "fade-up": "fadeUp 0.5s ease-out forwards",
         "fade-in": "fadeIn 0.5s ease-out forwards",
+        "gradient": "gradient 8s linear infinite",
       },
       keyframes: {
         fadeUp: {
@@ -65,6 +66,13 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        gradient: {
+          "0%, 100%": { "background-position": "0% 50%" },
+          "50%": { "background-position": "100% 50%" },
+        },
+      },
+      backgroundSize: {
+        "300%": "300%",
       },
       backdropBlur: {
         xs: "2px",

@@ -28,6 +28,10 @@ const userSchema= new mongoose.Schema({
         enum:['admin','user'],
         default:'user'
     },
+    isPaid:{
+        type:Boolean,
+        default:false
+    },
     isActive:{
         type:Boolean,
         default:true
