@@ -15,11 +15,14 @@ const userSchema= new mongoose.Schema({
         unique:true,
         match:[/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,'Please enter a valid email address'],  
     },
-    password:{
-        type:String,
-        required:[true, 'Password is required'],
-        minlength:[8, 'Password must be at least 8 characters long']
-    },
+    password: {
+        type: String,
+        required: function () {
+          console.log('Google ID:', this.googleId); // Debug log
+          return !this.googleId; // Password is required only if Google ID is absent
+        },
+        minlength: [8, 'Password must be at least 8 characters long'],
+      },
     role:{
         type:String,
         enum:['admin','user'],
@@ -35,11 +38,17 @@ const userSchema= new mongoose.Schema({
     createdAt:{
         type:Date,
         default:Date.now
-    }
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows null or undefined values
+      },
+      
 })
 
 //Middleware for password hashing before saving
-userSchema.pre('save', async(next)=>{
+userSchema.pre('save', async function(next){
     if(!this.isModified('password')){
         return next()
     }
@@ -64,4 +73,4 @@ userSchema.methods.comparePassword= async(enteredPassword)=>{
 const users= mongoose.model('users',userSchema)
 
 // Export the schema
-module.exports=userSchema
+module.exports=users
