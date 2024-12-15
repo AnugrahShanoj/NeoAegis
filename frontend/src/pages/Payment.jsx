@@ -42,7 +42,7 @@ const Payment = () => {
         email: "user@example.com",
       },
       theme: {
-        color: "#EA2B1F",
+        color: "#D82B21",
       },
     };
 
