@@ -1,43 +1,97 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { UserRound, Mail, Lock } from "lucide-react";
-
+import { registerAPI } from "../../../Services/allAPI";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+        
 const SignUp = () => {
-  // const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
-  // const [confirmPassword, setConfirmPassword] = useState("");
-  // const { toast } = useToast();
+  // To hold username,email,password
+  const [userDetails,setUserDetails]=useState({
+    username:"",
+    email:"",
+    password:""
+  })
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   if (password !== confirmPassword) {
-  //     toast({
-  //       title: "Passwords don't match",
-  //       description: "Please ensure both passwords are identical",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-  //   toast({
-  //     title: "Sign up attempted",
-  //     description: "This is a demo sign up page. Registration not implemented yet.",
-  //   });
-  // };
+  // Navigate
+  const navigate=useNavigate()
 
-  // const handleGoogleSignUp = () => {
-  //   toast({
-  //     title: "Google Sign Up",
-  //     description: "Google authentication will be implemented later.",
-  //   });
-  // };
+  // registerAPI calling
+  const handleRegister= async()=>{
+    console.log(userDetails)
+    const {username,email,password}=userDetails
+    if(!username || !email || !password){
+      toast.warn('Please fill all the fields', {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        });
+    }
+    else{
+      try{
+        const response=await registerAPI(userDetails)
+        console.log(response)
+        const {user}= response.data
+        if(response.status==200){
+          sessionStorage.setItem("userId",user.id)
+          toast.success(response.data.message, {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+            setTimeout(()=>{
+              navigate('/payment')
+            },4000)
+        }
+        else{
+          toast.error(response.response.data.message, {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+        }
+      }
+      catch(err){
+        console.log(err)
+      }
+    }
+  }
+  // console.log(userDetails);
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4A4848]/5 to-secondary/5 flex items-center justify-center px-4 relative overflow-hidden">
+       <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          />
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-secondary/5 rounded-full animate-pulse" />
         <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-[#4A4848]/5 rounded-full animate-pulse" />
@@ -91,6 +145,7 @@ const SignUp = () => {
                     placeholder="Username"
                     className="pl-10 bg-white/50 border-neutral-200/50 focus:border-secondary transition-colors"
                     required
+                    onChange={(e)=>setUserDetails({...userDetails,username:e.target.value})}
                   />
                 </div>
 
@@ -101,6 +156,7 @@ const SignUp = () => {
                     placeholder="Email address"
                     className="pl-10 bg-white/50 border-neutral-200/50 focus:border-secondary transition-colors"
                     required
+                    onChange={(e)=>setUserDetails({...userDetails,email:e.target.value})}
                   />
                 </div>
                 <div className="relative group">
@@ -110,6 +166,7 @@ const SignUp = () => {
                     placeholder="Password"
                     className="pl-10 bg-white/50 border-neutral-200/50 focus:border-secondary transition-colors"
                     required
+                    onChange={(e)=>setUserDetails({...userDetails,password:e.target.value})}
                   />
                 </div>
               </motion.div>
@@ -119,7 +176,7 @@ const SignUp = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <Button type="submit" className="w-full bg-gradient-to-r from-[#4A4848] to-secondary hover:opacity-90 text-white">
+                <Button onClick={handleRegister} type="button" className="w-full bg-gradient-to-r from-[#4A4848] to-secondary hover:opacity-90 text-white">
                   Create Account
                 </Button>
               </motion.div>

@@ -28,9 +28,13 @@ const userSchema= new mongoose.Schema({
         enum:['admin','user'],
         default:'user'
     },
-    isPaid:{
+    paymentStatus:{
         type:Boolean,
         default:false
+    },
+    paymentId:{
+        type:String,
+        default:null
     },
     isActive:{
         type:Boolean,

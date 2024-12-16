@@ -4,9 +4,9 @@ import axios from 'axios'
 // Configure the axios
 export const commonAPI=async(httpMethod,url,reqBody,reqHeader)=>{
     const reqConfig={
-        httpMethod:httpMethod,
+        method:httpMethod,
         url:url,
-        body:reqBody,
+        data:reqBody,
         headers:reqHeader?reqHeader:{
             'Content-Type':'application/json',
         }

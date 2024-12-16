@@ -10,13 +10,14 @@ const razorpay = new Razorpay({
 // Controller for creating an order
 exports.createOrder = async (req, res) => {
   try {
-    const { amount, currency = 'INR' } = req.body;
+    const { amount} = req.body;
 
     // Create an order with Razorpay
     const options = {
       amount: amount * 100, // Amount in paise
-      currency,
+      currency:"INR",
       receipt: `receipt_${Date.now()}`, // Unique receipt ID
+      // notes:{userId}
     };
 
     const order = await razorpay.orders.create(options);

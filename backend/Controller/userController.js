@@ -16,11 +16,20 @@ exports.registerAPI=async(req,res)=>{
                 email:email,
                 password:password,
                 role:"user",
+                paymentStatus:false,
+                paymentId:"",
                 isActive:true,
                 profilePic:"",
             })
             await newUser.save()
-            res.status(200).json({message:"User Registered Successfully"})
+            res.status(200).json({message:"User Registered Successfully",
+            user:{
+                id:newUser._id,
+                username:newUser.username,
+                email:newUser.email,
+            }
+            }
+            )
         }
     }
     catch(err){

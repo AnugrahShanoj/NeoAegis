@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import PremiumFeatureCard from "@/components/payment/PremiumFeatureCard";
 import PremiumPriceTag from "@/components/payment/PremiumPriceTag";
 import PremiumHeader from "@/components/payment/PremiumHeader";
+import { createPaymentAPI, verifyPaymentAPI } from '../../Services/allAPI';
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -27,15 +28,26 @@ const Payment = () => {
       return;
     }
 
+    try{
+          //1 API call for Razorpay Order
+    const response= await createPaymentAPI({amount:599})
+    console.log(response)
+    const {data}=response
+    if(!data.success){
+      alert("Failed To Initiate Payment. Try Again!")
+      return
+    }
+    // 2 open Razorpay Checkout
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: 59900,
-      currency: "INR",
+      amount: data.order.amount,
+      currency: data.order.currency,
+      order_id:data.order.id,
       name: "NeoAegis Safety",
       description: "Lifetime Safety Subscription",
-      handler: function (response) {
-        toast.success('Payment successful! Thank you for your contribution.');
-        navigate('/dashboard');
+      handler: async function (response) {
+      await  verifyPayment(response)
+        // navigate('/dashboard');
       },
       prefill: {
         name: "User Name",
@@ -48,6 +60,30 @@ const Payment = () => {
 
     const paymentObject = new window.Razorpay(options);
     paymentObject.open();
+    }
+    catch(err){
+      console.log('Error during payment process: ',err)
+      alert("Something went wrong. Please try again later.")
+    }
+
+    // Function to verify payment
+    const verifyPayment=async(response)=>{
+      try{
+        const paymentResponse= await verifyPaymentAPI(response)
+        console.log(paymentResponse)
+        if(paymentResponse.data.success){
+          alert("Payment Successful.")
+          navigate('/dashboard')
+        }
+        else{
+          alert("Payment Verification Failed.")
+        }
+      }
+      catch(err){
+        console.log('Error during payment verification: ',err)
+        alert("Error verifying payment.")
+      }
+    }
   };
 
   const features = [
