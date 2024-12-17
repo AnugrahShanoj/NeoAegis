@@ -1,20 +1,52 @@
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Shield, GraduationCap, Users, Heart, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import PremiumFeatureCard from "@/components/payment/PremiumFeatureCard";
 import PremiumPriceTag from "@/components/payment/PremiumPriceTag";
 import PremiumHeader from "@/components/payment/PremiumHeader";
-import { createPaymentAPI, verifyPaymentAPI } from '../../Services/allAPI';
+import { createPaymentAPI, verifyPaymentAPI } from "../../Services/allAPI";
 
 const Payment = () => {
   const navigate = useNavigate();
 
+  // Handle userId for both manual and Google-authenticated users
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get("userId");
+    const authSuccess = params.get("authSuccess");
+
+    if (userId) {
+      // Store userId in sessionStorage
+      sessionStorage.setItem("userId", userId);
+
+      // Display a toast if Google authentication was successful
+      if (authSuccess === "true") {
+        toast.success("Google Authentication Successful!", {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+      }
+
+      // Clear query parameters from the URL for better UX
+      window.history.replaceState({}, document.title, "/payment");
+    } else {
+      // Redirect to sign-up if no userId is found
+      navigate("/sign-up");
+    }
+  }, [navigate]);
+
   const loadRazorpay = () => {
     return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
@@ -22,73 +54,83 @@ const Payment = () => {
   };
 
   const handlePayment = async () => {
-    const userId=sessionStorage.getItem("userId")
-    const res = await loadRazorpay();
-    if (!res) {
-      toast.error('Razorpay SDK failed to load');
+    const userId = sessionStorage.getItem("userId");
+    if (!userId) {
+      toast.error("User ID not found. Please try again.");
       return;
     }
 
-    try{
-          //1 API call for Razorpay Order
-    const response= await createPaymentAPI({amount:599})
-    console.log(response)
-    const {data}=response
-    if(!data.success){
-      alert("Failed To Initiate Payment. Try Again!")
-      return
-    }
-    // 2 open Razorpay Checkout
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: data.order.amount,
-      currency: data.order.currency,
-      order_id:data.order.id,
-      name: "NeoAegis Safety",
-      description: "Lifetime Safety Subscription",
-      handler: async function (response) {
-      await  verifyPayment(response)
-        // navigate('/dashboard');
-      },
-      prefill: {
-        name: "User Name",
-        email: "user@example.com",
-      },
-      theme: {
-        color: "#D82B21",
-      },
-    };
-
-    const paymentObject = new window.Razorpay(options);
-    paymentObject.open();
-    }
-    catch(err){
-      console.log('Error during payment process: ',err)
-      alert("Something went wrong. Please try again later.")
+    const res = await loadRazorpay();
+    if (!res) {
+      toast.error("Razorpay SDK failed to load");
+      return;
     }
 
-    // Function to verify payment
-    const verifyPayment=async(response)=>{
-      try{
-        const paymentResponse= await verifyPaymentAPI({
-          razorpay_payment_id:response.razorpay_payment_id,
-          razorpay_order_id:response.razorpay_order_id,
-          razorpay_signature:response.razorpay_signature,
-          userId
-        })
-        console.log(paymentResponse)
-        if(paymentResponse.data.success){
-          alert("Payment Successful.")
-          navigate('/login')
-        }
-        else{
-          alert("Payment Verification Failed.")
-        }
+    try {
+      // 1. API call to create Razorpay order
+      const response = await createPaymentAPI({ amount: 599 });
+      const { data } = response;
+
+      if (!data.success) {
+        toast.error("Failed to initiate payment. Try again.");
+        return;
       }
-      catch(err){
-        console.log('Error during payment verification: ',err)
-        alert("Error verifying payment.")
+
+      // 2. Razorpay options for opening the checkout modal
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        order_id: data.order.id, // Pass the order ID
+        name: "NeoAegis Safety",
+        description: "Lifetime Safety Subscription",
+        handler: async function (response) {
+          await verifyPayment(response, userId); // Verify payment after success
+        },
+        prefill: {
+          name: "User Name",
+          email: "user@example.com", // Replace with actual user email
+        },
+        theme: {
+          color: "#D82B21",
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (err) {
+      console.error("Error during payment process: ", err);
+      toast.error("Something went wrong. Please try again later.");
+    }
+  };
+
+  const verifyPayment = async (response, userId) => {
+    try {
+      const paymentResponse = await verifyPaymentAPI({
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_signature: response.razorpay_signature,
+        userId, // Send user ID to backend
+      });
+      console.log(paymentResponse);
+
+      if (paymentResponse.data.success) {
+        toast.success("Payment Successful! Redirecting to login...", {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+        setTimeout(() => navigate("/login"), 4000);
+      } else {
+        toast.error("Payment verification failed. Try again.");
       }
+    } catch (err) {
+      console.error("Error during payment verification: ", err);
+      toast.error("Error verifying payment. Please try again.");
     }
   };
 
@@ -96,23 +138,23 @@ const Payment = () => {
     {
       icon: Shield,
       title: "24/7 Emergency Response",
-      description: "Instant help when you need it most"
+      description: "Instant help when you need it most",
     },
     {
       icon: Users,
       title: "Trusted Emergency Contacts",
-      description: "Your safety network, always connected"
+      description: "Your safety network, always connected",
     },
     {
       icon: GraduationCap,
       title: "Support Children's Education",
-      description: "Help build a brighter future"
+      description: "Help build a brighter future",
     },
     {
       icon: Heart,
       title: "Help Elderly Care Programs",
-      description: "Support dignified aging"
-    }
+      description: "Support dignified aging",
+    },
   ];
 
   return (
@@ -170,10 +212,7 @@ const Payment = () => {
             </div>
 
             <div className="text-center">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   onClick={handlePayment}
                   className="button-secondary w-full md:w-auto md:px-12 py-6 text-lg relative overflow-hidden group"

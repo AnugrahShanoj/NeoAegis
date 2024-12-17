@@ -44,11 +44,25 @@ exports.googleAuthCallback = async (req, res) => {
       // The user object will be attached to req.user by Passport
       const user = req.user;
   
-      // Respond with a success message and the user details
-      res.status(200).json({message: "Google Authentication Successful"});
+      // Redirect to payment page on frontend with userId in query string
+      const redirectUrl=`http://localhost:8080/payment?userId=${user._id}&authSuccess=true`
+      res.status(200).redirect(redirectUrl)
     } catch (err) {
       console.error("Error during Google authentication: ", err);
       res.status(500).json({ message: "Server Error", error: err });
     }
   };
+
+
+  // Implement logic for user login
+  exports.login=async(req,res)=>{
+    console.log("Inside Login")
+    try{
+
+    }
+    catch(err){
+        console.log("Server Error: ",err)
+        res.status(500).josn({message:`Server Error :${err}`})
+    }
+  }
   

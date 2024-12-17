@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { UserRound, Mail, Lock } from "lucide-react";
-import { googleSignUpAPI, registerAPI } from "../../../Services/allAPI";
+import {  registerAPI } from "../../../Services/allAPI";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
         
@@ -80,8 +80,9 @@ const SignUp = () => {
   const handleGoogleSignUp=async()=>{
     try{
       // Call your Google authentication route
-      const response=await googleSignUpAPI()
-      console.log(response)
+      // const response=await googleSignUpAPI()
+      // console.log(response)
+      window.location.href="http://localhost:3000/auth/google"
     }
     catch(err){
       console.log("Error during Google authentication: ",err)

@@ -7,15 +7,15 @@ import { commonAPI } from "./commonAPI";
 export const registerAPI= async(reqBody)=>{
    return await commonAPI('post',`${serverUrl}/register`,reqBody,"")
 }
-// 2 API call for google sign up
-export const googleSignUpAPI=async()=>{
-   return await commonAPI('get',`${serverUrl}/auth/google`,"","")
-}
-// 3 API call for payment initiate
+// 2 API call for payment initiate
 export const createPaymentAPI= async(reqBody)=>{
    return await commonAPI('post',`${serverUrl}/payment/createOrder`,reqBody,"")
 }
-// 4 API call for payment verification
+// 3 API call for payment verification
 export const verifyPaymentAPI= async(reqBody)=>{
    return await commonAPI('post',`${serverUrl}/payment/verifyPayment`,reqBody,"")
+}
+// 4 API call for login
+export const loginAPI=async(reqBody)=>{
+   return await commonAPI('post',`${serverUrl}/register`,reqBody,"")
 }
