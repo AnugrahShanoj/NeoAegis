@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { UserRound, Mail, Lock } from "lucide-react";
-import { registerAPI } from "../../../Services/allAPI";
+import { googleSignUpAPI, registerAPI } from "../../../Services/allAPI";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
         
@@ -73,6 +73,18 @@ const SignUp = () => {
       catch(err){
         console.log(err)
       }
+    }
+  }
+
+  // Google Authentication calling
+  const handleGoogleSignUp=async()=>{
+    try{
+      // Call your Google authentication route
+      const response=await googleSignUpAPI()
+      console.log(response)
+    }
+    catch(err){
+      console.log("Error during Google authentication: ",err)
     }
   }
   // console.log(userDetails);
@@ -196,7 +208,7 @@ const SignUp = () => {
                 type="button"
                 variant="outline"
                 className="w-full bg-white hover:bg-neutral-50"
-                // onClick={handleGoogleSignUp}
+                onClick={handleGoogleSignUp}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path

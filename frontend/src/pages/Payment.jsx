@@ -22,6 +22,7 @@ const Payment = () => {
   };
 
   const handlePayment = async () => {
+    const userId=sessionStorage.getItem("userId")
     const res = await loadRazorpay();
     if (!res) {
       toast.error('Razorpay SDK failed to load');
@@ -69,11 +70,16 @@ const Payment = () => {
     // Function to verify payment
     const verifyPayment=async(response)=>{
       try{
-        const paymentResponse= await verifyPaymentAPI(response)
+        const paymentResponse= await verifyPaymentAPI({
+          razorpay_payment_id:response.razorpay_payment_id,
+          razorpay_order_id:response.razorpay_order_id,
+          razorpay_signature:response.razorpay_signature,
+          userId
+        })
         console.log(paymentResponse)
         if(paymentResponse.data.success){
           alert("Payment Successful.")
-          navigate('/dashboard')
+          navigate('/login')
         }
         else{
           alert("Payment Verification Failed.")

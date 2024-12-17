@@ -1,5 +1,6 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const users=require('../Models/userSchema')
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
@@ -29,18 +30,33 @@ exports.createOrder = async (req, res) => {
 };
 
 // Controller for verifying payment
-exports.verifyPayment = (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+exports.verifyPayment = async(req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature,userId } = req.body;
 
-  // Generate a signature using Razorpay secret
-  const generated_signature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest('hex');
+  try{
+        // Generate a signature using Razorpay secret
+      const generated_signature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
 
-  if (generated_signature === razorpay_signature) {
-    res.status(200).json({ success: true, message: 'Payment verified successfully' });
-  } else {
-    res.status(400).json({ success: false, error: 'Invalid payment signature' });
+    if (generated_signature === razorpay_signature) {
+      const updatedUser= await users.findByIdAndUpdate(userId,{
+        $set:{
+          paymentStatus:true,
+          paymentId:razorpay_payment_id
+        }
+      },
+      {new: true}
+    )
+      console.log(updatedUser)
+      res.status(200).json({ success: true, message: 'Payment verified successfully' });
+    } else {
+      res.status(400).json({ success: false, error: 'Invalid payment signature' });
+    }
+  }
+  catch(err){
+    console.log("Error verifying payment: ",err)
+    res.status(500).json({ success: false, error: 'Internal Server Error'})
   }
 };
