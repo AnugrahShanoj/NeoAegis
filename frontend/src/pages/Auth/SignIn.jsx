@@ -1,32 +1,78 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { Shield, Mail, Lock } from "lucide-react";
-
+import { loginAPI } from "../../../Services/allAPI";
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from 'react-toastify';
 const SignIn = () => {
-  // const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
-  // const { toast } = useToast();
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   toast({
-  //     title: "Sign in attempted",
-  //     description: "This is a demo sign in page. Authentication not implemented yet.",
-  //   });
-  // };
-
-  // const handleGoogleSignIn = () => {
-  //   toast({
-  //     title: "Google Sign In",
-  //     description: "Google authentication will be implemented later.",
-  //   });
-  // };
-
+  const navigate=useNavigate()
+  // To hold input email and password
+ const [loginUser,setLoginUser]=useState({
+  email: "",
+  password: "",
+ })
+//  console.log(userDetails)
+ const handleLogin=async()=>{
+  const {email,password}=loginUser
+  if(!email || !password){
+    alert("Please fill all the fields")
+  }
+  else{
+    // API call to login
+    try{
+      const response= await loginAPI(loginUser)
+      console.log(response)
+      if(response.status==200){
+          toast.success("Login Successful", {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+            setTimeout(()=>{
+              navigate('/dashboard')
+            }, 4000)
+            sessionStorage.setItem("username",response.data.currentUser.username)
+            // Storing the token generated from backend at the time of login
+            sessionStorage.setItem("token",response.data.token)
+        }
+        else{
+          toast.error(response.response.data, {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+        }
+    }
+    catch(err){
+      console.log("Error During Login: ",err)
+      toast.error("Server Error", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        });
+    }
+  }
+ }
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4A4848]/5 to-secondary/5 flex items-center justify-center px-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
@@ -78,6 +124,7 @@ const SignIn = () => {
                 <div className="relative group">
                   <Mail className="absolute left-3 top-3 w-5 h-5 text-neutral-400 group-hover:text-secondary transition-colors" />
                   <Input
+                    onChange={(e)=>{setLoginUser({...loginUser,email:e.target.value})}}
                     type="email"
                     placeholder="Email address"
                     className="pl-10 bg-white/50 border-neutral-200/50 focus:border-secondary transition-colors"
@@ -88,6 +135,7 @@ const SignIn = () => {
                 <div className="relative group">
                   <Lock className="absolute left-3 top-3 w-5 h-5 text-neutral-400 group-hover:text-secondary transition-colors" />
                   <Input
+                    onChange={(e)=>{setLoginUser({...loginUser,password:e.target.value})}}
                     type="password"
                     placeholder="Password"
                     className="pl-10 bg-white/50 border-neutral-200/50 focus:border-secondary transition-colors"
@@ -110,7 +158,7 @@ const SignIn = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <Button type="submit" className="w-full bg-gradient-to-r from-[#4A4848] to-secondary hover:opacity-90 text-white">
+                <Button onClick={handleLogin} type="button" className="w-full bg-gradient-to-r from-[#4A4848] to-secondary hover:opacity-90 text-white">
                   Sign In
                 </Button>
               </motion.div>
@@ -168,6 +216,18 @@ const SignIn = () => {
           </div>
         </motion.div>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

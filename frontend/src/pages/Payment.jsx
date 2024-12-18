@@ -20,8 +20,9 @@ const Payment = () => {
 
     if (userId) {
       // Store userId in sessionStorage
+      if(!sessionStorage.getItem('userId')){
       sessionStorage.setItem("userId", userId);
-
+      }
       // Display a toast if Google authentication was successful
       if (authSuccess === "true") {
         toast.success("Google Authentication Successful!", {
@@ -37,7 +38,7 @@ const Payment = () => {
 
       // Clear query parameters from the URL for better UX
       window.history.replaceState({}, document.title, "/payment");
-    } else {
+    } else if(!sessionStorage.getItem("userId")) {
       // Redirect to sign-up if no userId is found
       navigate("/sign-up");
     }
@@ -124,7 +125,7 @@ const Payment = () => {
           draggable: true,
           theme: "light",
         });
-        setTimeout(() => navigate("/login"), 4000);
+        setTimeout(() => navigate("/sign-in"), 4000);
       } else {
         toast.error("Payment verification failed. Try again.");
       }

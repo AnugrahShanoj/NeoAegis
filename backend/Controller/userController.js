@@ -1,10 +1,15 @@
 // Import user model
 const users=require('../Models/userSchema')
+const bcrypt=require('bcrypt')
+const jwt=require('jsonwebtoken')
 
 // Implement logic for user register
 exports.registerAPI=async(req,res)=>{
     console.log("Inside registerAPI")
     const {username,email,password}=req.body
+    if(password.length<8){
+        return res.status(400).json({message:"Password must be at least 8 characters long"})
+    }
     try{
         const existingUser= await users.findOne({email})
         if(existingUser){
@@ -55,10 +60,33 @@ exports.googleAuthCallback = async (req, res) => {
 
 
   // Implement logic for user login
-  exports.login=async(req,res)=>{
-    console.log("Inside Login")
+  exports.loginAPI=async(req,res)=>{
+    console.log("Inside Login API")
+    const {email,password}=req.body
     try{
-
+        const existingUser=await users.findOne({email})
+        if(!existingUser){
+           return res.status(404).json({message:'User Not Found'})
+        }
+        const isMatch= await bcrypt.compare(password,existingUser.password)
+        if(!isMatch){
+            return res.status(401).json({message:'Invalid Credentials'})
+        }
+        if(existingUser.paymentStatus!==true){
+            return res.status(406).json({
+                message:'Payment Not Complete. Please Complete The Payment',
+                redirectTo:'/payment',
+                userId:existingUser._id
+            })
+        }
+        // Login Successful
+        const token= jwt.sign({userId:existingUser._id},process.env.jwtKey)
+        console.log("TOKEN: ",token)
+        res.status(200).json({
+            message:'Login Successful',
+            currentUser:existingUser,
+            token
+        })
     }
     catch(err){
         console.log("Server Error: ",err)

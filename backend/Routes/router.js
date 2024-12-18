@@ -27,6 +27,10 @@ router.post('/register',userController.registerAPI)
     router.post('/payment/verifyPayment', paymentController.verifyPayment);
 
 
+// 4 Route for handling Login
+    router.post('/login',userController.loginAPI)
+
+
 
 // Export the router
 module.exports=router

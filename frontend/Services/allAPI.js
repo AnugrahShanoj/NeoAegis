@@ -17,5 +17,5 @@ export const verifyPaymentAPI= async(reqBody)=>{
 }
 // 4 API call for login
 export const loginAPI=async(reqBody)=>{
-   return await commonAPI('post',`${serverUrl}/register`,reqBody,"")
+   return await commonAPI('post',`${serverUrl}/login`,reqBody,"")
 }

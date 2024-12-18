@@ -55,7 +55,7 @@ const SignUp = () => {
             });
             setTimeout(()=>{
               navigate('/payment')
-            },4000)
+            },3000)
         }
         else{
           toast.error(response.response.data.message, {
