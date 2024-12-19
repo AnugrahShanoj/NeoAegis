@@ -40,8 +40,8 @@ const SignUp = () => {
       try{
         const response=await registerAPI(userDetails)
         console.log(response)
-        const {user}= response.data
         if(response.status==200){
+          const {user}= response.data
           sessionStorage.setItem("userId",user.id)
           toast.success(response.data.message, {
             position: "top-center",
@@ -55,7 +55,7 @@ const SignUp = () => {
             });
             setTimeout(()=>{
               navigate('/payment')
-            },3000)
+            },4000)
         }
         else{
           toast.error(response.response.data.message, {
@@ -72,6 +72,7 @@ const SignUp = () => {
       }
       catch(err){
         console.log(err)
+        
       }
     }
   }

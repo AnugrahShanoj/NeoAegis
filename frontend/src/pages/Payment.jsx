@@ -125,7 +125,7 @@ const Payment = () => {
           draggable: true,
           theme: "light",
         });
-        setTimeout(() => navigate("/sign-in"), 4000);
+        navigate("/sign-in")
       } else {
         toast.error("Payment verification failed. Try again.");
       }

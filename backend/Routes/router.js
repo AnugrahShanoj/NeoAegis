@@ -5,6 +5,7 @@ const passport=require('passport')
 // Import Controllers
 const userController=require('../Controller/userController')
 const paymentController=require('../Controller/paymentController')
+const smsController=require('../Controller/smsController')
 
 // Create a router using express router
 const router=express.Router()
@@ -29,6 +30,10 @@ router.post('/register',userController.registerAPI)
 
 // 4 Route for handling Login
     router.post('/login',userController.loginAPI)
+
+
+// 5 Route for handling SMS Request
+router.post('/sms/request',smsController.smsAPI)
 
 
 

@@ -80,7 +80,7 @@ exports.googleAuthCallback = async (req, res) => {
             })
         }
         // Login Successful
-        const token= jwt.sign({userId:existingUser._id},process.env.jwtKey)
+        const token= jwt.sign({userId:existingUser._id, role:existingUser.role},process.env.jwtKey)
         console.log("TOKEN: ",token)
         res.status(200).json({
             message:'Login Successful',

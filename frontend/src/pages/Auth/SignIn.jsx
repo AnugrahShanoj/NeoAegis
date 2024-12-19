@@ -28,6 +28,12 @@ const SignIn = () => {
       const response= await loginAPI(loginUser)
       console.log(response)
       if(response.status==200){
+        sessionStorage.setItem("username",response.data.currentUser.username)
+        // Storing the token generated from backend at the time of login
+        sessionStorage.setItem("token",response.data.token)
+        sessionStorage.setItem("userId", response.data.currentUser.id);
+        sessionStorage.setItem("role", response.data.currentUser.role);
+
           toast.success("Login Successful", {
             position: "top-center",
             autoClose: 3000,
@@ -41,9 +47,6 @@ const SignIn = () => {
             setTimeout(()=>{
               navigate('/dashboard')
             }, 4000)
-            sessionStorage.setItem("username",response.data.currentUser.username)
-            // Storing the token generated from backend at the time of login
-            sessionStorage.setItem("token",response.data.token)
         }
         else{
           toast.error(response.response.data, {
