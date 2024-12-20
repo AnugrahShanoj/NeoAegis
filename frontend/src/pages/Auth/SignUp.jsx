@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { UserRound, Mail, Lock } from "lucide-react";
 import {  registerAPI } from "../../../Services/allAPI";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-        
+
 const SignUp = () => {
   // To hold username,email,password
   const [userDetails,setUserDetails]=useState({
@@ -91,6 +91,34 @@ const SignUp = () => {
   }
   // console.log(userDetails);
   
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get("userId");
+    const authSuccess = params.get("authSuccess");
+    const token=params.get("token")
+  
+    if (authSuccess === "true" && userId && token) {
+      sessionStorage.setItem("userId", userId);
+      sessionStorage.setItem("token", token);
+      toast.success("Google Authentication Successful!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+  
+      setTimeout(() => {
+        navigate("/payment");
+      }, 3000);
+  
+      // Clear query parameters from URL
+      window.history.replaceState({}, document.title, "/sign-up");
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4A4848]/5 to-secondary/5 flex items-center justify-center px-4 relative overflow-hidden">

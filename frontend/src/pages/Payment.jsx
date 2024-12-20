@@ -89,8 +89,8 @@ const Payment = () => {
           await verifyPayment(response, userId); // Verify payment after success
         },
         prefill: {
-          name: "User Name",
-          email: "user@example.com", // Replace with actual user email
+          name: "",
+          email: "", // Replace with actual user email
         },
         theme: {
           color: "#D82B21",
@@ -116,7 +116,7 @@ const Payment = () => {
       console.log(paymentResponse);
 
       if (paymentResponse.data.success) {
-        toast.success("Payment Successful! Redirecting to login...", {
+        toast.success("Payment Successful. Please Login", {
           position: "top-center",
           autoClose: 3000,
           hideProgressBar: false,
@@ -125,6 +125,7 @@ const Payment = () => {
           draggable: true,
           theme: "light",
         });
+        sessionStorage.removeItem('authToastShown')
         navigate("/sign-in")
       } else {
         toast.error("Payment verification failed. Try again.");

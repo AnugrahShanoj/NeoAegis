@@ -46,17 +46,30 @@ exports.registerAPI=async(req,res)=>{
 // Implement logic for google authentication for register
 exports.googleAuthCallback = async (req, res) => {
     try {
-      // The user object will be attached to req.user by Passport
       const user = req.user;
   
-      // Redirect to payment page on frontend with userId in query string
-      const redirectUrl=`http://localhost:8080/payment?userId=${user._id}&authSuccess=true`
-      res.status(200).redirect(redirectUrl)
+      if (!user) {
+        return res.status(401).json({ message: "Authentication failed" });
+      }
+      
+      // Redirect based on payment status
+      if (!user.paymentStatus) {
+        const redirectUrl = `http://localhost:8080/payment?userId=${user._id}&authSuccess=true`;
+        return res.redirect(redirectUrl);
+      }
+  
+      // Token Generation
+      const token=jwt.sign({userId:user._id,role:user.role},process.env.jwtKey)
+      console.log("Token Generated: ",token)
+      // Payment completed, redirect to dashboard
+      const redirectUrl = `http://localhost:8080/dashboard?userId=${user._id}&authSuccess=true&token=${token}`;
+      return res.redirect(redirectUrl);
     } catch (err) {
-      console.error("Error during Google authentication: ", err);
-      res.status(500).json({ message: "Server Error", error: err });
+      console.error("Error in Google Authentication Callback: ", err);
+      return res.status(500).json({ message: "Server Error", error: err });
     }
   };
+  
 
 
   // Implement logic for user login
@@ -65,6 +78,7 @@ exports.googleAuthCallback = async (req, res) => {
     const {email,password}=req.body
     try{
         const existingUser=await users.findOne({email})
+        console.log(existingUser)
         if(!existingUser){
            return res.status(404).json({message:'User Not Found'})
         }

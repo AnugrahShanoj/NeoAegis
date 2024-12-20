@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ const SignIn = () => {
         sessionStorage.setItem("username",response.data.currentUser.username)
         // Storing the token generated from backend at the time of login
         sessionStorage.setItem("token",response.data.token)
-        sessionStorage.setItem("userId", response.data.currentUser.id);
+        sessionStorage.setItem("userId", response.data.currentUser._id);
         sessionStorage.setItem("role", response.data.currentUser.role);
 
           toast.success("Login Successful", {
@@ -48,8 +48,10 @@ const SignIn = () => {
               navigate('/dashboard')
             }, 4000)
         }
-        else{
-          toast.error(response.response.data, {
+        else if(response.status==406){
+          // Payment Incomplete
+          sessionStorage.setItem('userId',response.response.data.userId)
+          toast.error(response.response.data.message, {
             position: "top-center",
             autoClose: 3000,
             hideProgressBar: false,
@@ -59,6 +61,9 @@ const SignIn = () => {
             progress: undefined,
             theme: "light",
             });
+            setTimeout(()=>{
+              navigate('/payment')
+            }, 4000)
         }
     }
     catch(err){
@@ -76,6 +81,42 @@ const SignIn = () => {
     }
   }
  }
+
+
+
+ // Google Login
+ const handleGoogleSignIn = () => {
+  window.location.href = "http://localhost:3000/auth/google"; // Backend endpoint for Google auth
+};
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("userId");
+  const authSuccess = params.get("authSuccess");
+  const token = params.get("token");
+
+  if (authSuccess === "true" && userId && token) {
+    sessionStorage.setItem("userId", userId);
+    sessionStorage.setItem("token", token);
+
+    toast.success("Google Login Successful!", {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 3000);
+
+    // Clear query parameters from URL
+    window.history.replaceState({}, document.title, "/sign-in");
+  }
+}, [navigate]);
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4A4848]/5 to-secondary/5 flex items-center justify-center px-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
@@ -181,7 +222,7 @@ const SignIn = () => {
                 type="button"
                 variant="outline"
                 className="w-full bg-white hover:bg-neutral-50"
-                // onClick={handleGoogleSignIn}
+                onClick={handleGoogleSignIn}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path

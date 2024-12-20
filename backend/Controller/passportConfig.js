@@ -3,6 +3,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../Models/userSchema'); // Import your User Schema
+const jwt=require('jsonwebtoken')
 
 passport.use(
   new GoogleStrategy(
@@ -24,13 +25,16 @@ passport.use(
             profilePic: profile.photos[0]?.value || '',
             googleId: profile.id, // Save Google ID
             role: 'user', // Default role
+            paymentStatus:false
           });
           console.log("User being saved: ",user)
           await user.save();
         }
-
+        
+        // Pass user object to next middleware, payment status handled in callback
         return done(null, user); // Pass user data to the next step
       } catch (err) {
+        console.error("Error during google authentication: ",err)
         return done(err, null);
       }
     }
@@ -39,14 +43,19 @@ passport.use(
 
 // Serialize and deserialize user
 passport.serializeUser((user, done) => {
+  console.log("Serializing User Id: ",user.id)
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
+    console.log("Deserializing User: ",user)
     done(null, user);
   } catch (err) {
+    console.error("Error during deserialization: ",err)
     done(err, null);
   }
 });
+
+module.exports=passport
