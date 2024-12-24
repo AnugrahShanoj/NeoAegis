@@ -6,6 +6,8 @@ const passport=require('passport')
 const userController=require('../Controller/userController')
 const paymentController=require('../Controller/paymentController')
 const smsController=require('../Controller/smsController')
+const emergencyContactController=require('../Controller/emergencyContactController')
+const jwtMiddlewares = require('../Middleware/jwtMiddleware')
 
 // Create a router using express router
 const router=express.Router()
@@ -35,7 +37,18 @@ router.post('/register',userController.registerAPI)
 // 5 Route for handling SMS Request
 router.post('/sms/request',smsController.smsAPI)
 
+// 6 Route for handling Add Emergency Contact 
+router.post('/addEmergencyContact',jwtMiddlewares,emergencyContactController.addEmergencyContact)
+
+// 7 Route for handling Get Emergency Contact
+router.get('/getEmergencyContact',jwtMiddlewares,emergencyContactController.getEmergencyContacts)
+
+// 8 Route for handling deleting an emergency contact
+router.delete('/deleteEmergencyContact/:contactId',jwtMiddlewares,emergencyContactController.deleteEmergencyContact)
+
+// 9 Route for handling Edit an emergency contact
+router.put('/editEmergencyContact/:contactId',jwtMiddlewares,emergencyContactController.editEmergencyContact)
 
 
-// Export the router
+// Export the router    
 module.exports=router

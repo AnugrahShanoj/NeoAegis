@@ -19,3 +19,23 @@ export const verifyPaymentAPI= async(reqBody)=>{
 export const loginAPI=async(reqBody)=>{
    return await commonAPI('post',`${serverUrl}/login`,reqBody,"")
 }
+
+// 5 API call for adding a new emergency contact
+export const addEmergencyContactAPI=async(reqBody,reqHeader)=>{
+   return await commonAPI('post',`${serverUrl}/addEmergencyContact`,reqBody,reqHeader)
+}
+
+// 6 API call for get emergency contacts of the user
+export const getEmergencyContactAPI=async(reqHeader)=>{
+   return await commonAPI('get',`${serverUrl}/getEmergencyContact`,"",reqHeader)
+}
+
+// 7 API call for delete an emergency contact
+export const deleteEmergencyContactAPI=async(contactId,reqHeader)=>{
+   return await commonAPI('delete',`${serverUrl}/deleteEmergencyContact/${contactId}`,"",reqHeader)
+}
+
+// 8 API Call for edit an emergency contact
+export const editEmergencyContactAPI= async(contactId,reqBody,reqHeader)=>{
+   return await commonAPI('put',`${serverUrl}/editEmergencyContact/${contactId}`,reqBody,reqHeader)
+}
