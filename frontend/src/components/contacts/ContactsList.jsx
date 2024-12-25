@@ -14,7 +14,7 @@ const ContactsList = ({ selectedContacts, setSelectedContacts }) => {
   const contactsPerPage = 5;
   const handleCheckboxChange = (checked, id) => {
     setSelectedContacts(prev =>
-      checked ? [...prev, _id] : prev.filter(contactId => contactId !== id)
+      checked ? [...prev, id] : prev.filter(contactId => contactId !== id)
     );
   };
   const totalPages = Math.ceil(contacts.length / contactsPerPage);
@@ -62,6 +62,7 @@ const ContactsList = ({ selectedContacts, setSelectedContacts }) => {
     
   }
 console.log(contacts)
+console.log(selectedContacts)
   useEffect(()=>{
     setToken(sessionStorage.getItem('token'))
     getEmergencyContacts()
@@ -149,7 +150,6 @@ console.log(contacts)
         contact._id === updatedContact._id ? updatedContact : contact
       )
     );
-    // getEmergencyContacts();
     // Close the modal after saving changes
     setEditingContact(null);
 

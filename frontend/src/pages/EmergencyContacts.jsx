@@ -9,15 +9,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardSidebar from "../components/Dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
+import { testAlertAPI } from "../../Services/allAPI";
 const EmergencyContacts = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState([]);
-  const handleTestAlert = () => {
+  const handleTestAlert =async () => {
     if (selectedContacts.length === 0) {
-      toast.error("Please select at least one contact");
+      alert("Please select at least one contact");
       return;
     }
-    toast.success(`Test alert sent to ${selectedContacts.length} contacts`);
+    const token= sessionStorage.getItem('token')
+    if(token){
+      const reqHeader={
+        'Authorization':`Bearer ${token}`
+      }
+      const reqBody={
+        msg:"This is a Test Alert."
+      }
+      const response= await testAlertAPI(reqBody,reqHeader)
+      console.log(response)
+      if(response.status==200){
+        alert(`Test alert sent to ${selectedContacts.length} contacts`);
+      }
+    }
   };
   return (
     <SidebarProvider>

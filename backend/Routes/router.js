@@ -35,7 +35,7 @@ router.post('/register',userController.registerAPI)
 
 
 // 5 Route for handling SMS Request
-router.post('/sms/request',smsController.smsAPI)
+router.post('/sms/request',jwtMiddlewares,smsController.smsAPI)
 
 // 6 Route for handling Add Emergency Contact 
 router.post('/addEmergencyContact',jwtMiddlewares,emergencyContactController.addEmergencyContact)

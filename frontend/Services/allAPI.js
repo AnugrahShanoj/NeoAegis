@@ -39,3 +39,9 @@ export const deleteEmergencyContactAPI=async(contactId,reqHeader)=>{
 export const editEmergencyContactAPI= async(contactId,reqBody,reqHeader)=>{
    return await commonAPI('put',`${serverUrl}/editEmergencyContact/${contactId}`,reqBody,reqHeader)
 }
+
+
+// 9 API call for test alert to emergency contacts
+export const testAlertAPI=async(reqBody,reqHeader)=>{
+   return await commonAPI('post',`${serverUrl}/sms/request`,reqBody,reqHeader)
+}
