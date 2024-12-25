@@ -64,13 +64,15 @@ exports.editEmergencyContact= async(req,res)=>{
     console.log("Contact Details Obtained: ",fullname,phoneNumber,email)
     try {
         console.log("Inside edit try")
-        const editContact= await EmergencyContact.findByIdAndUpdate({_id:contactId},{
+        const updatedContact= await EmergencyContact.findByIdAndUpdate({_id:contactId},{
             fullname:fullname,
             phoneNumber:phoneNumber,
             email:email
-        })
-        await editContact.save()
-        res.status(200).json(editContact)
+        },
+        { new: true } // Ensure the updated document is returned
+    )
+        await updatedContact.save()
+        res.status(200).json({updatedContact:updatedContact})
 
     } catch (error) {
         console.log("Error In Editing Contact",error)

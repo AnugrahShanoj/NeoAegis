@@ -31,9 +31,14 @@ const ContactsList = ({ selectedContacts, setSelectedContacts }) => {
       }
       console.log(reqHeader)
       //API Call for emergency contacts
-      const response=await getEmergencyContactAPI(reqHeader)
+      try {
+        const response=await getEmergencyContactAPI(reqHeader)
       console.log(response)
       setContacts(response.data)
+      } catch (error) {
+        console.error("Error fetching contacts: ", err);
+      alert("Failed to fetch contacts.");
+      }
     }
   }
 
@@ -127,18 +132,32 @@ console.log(contacts)
           ))}
         </div>
       )}
-      <EditContactForm
-        contact={editingContact}
-        open={!!editingContact}
-        onOpenChange={(open) => !open && setEditingContact(null)}
-        onSave={(updatedContact) => {
-          setContacts((prevContacts)=>prevContacts.map(c =>
-            c._id === updatedContact.id ? updatedContact : c
-          ));
-          setEditingContact(null);
-          // toast.success("Contact updated successfully");
-        }}
-      />
+     <EditContactForm
+  contact={editingContact} // Pass the contact to be edited
+  open={!!editingContact} // Control modal visibility
+  onOpenChange={(open) => {
+    if (!open) setEditingContact(null); // Close modal and reset state
+  }}
+  onSave={(updatedContact) => {
+    if(!updatedContact || !updatedContact._id){
+      console.error("Updated contact is missing _id");
+      return;
+    }
+    // Update the contacts state in real-time
+    setContacts((prevContacts) =>
+      prevContacts.map((contact) =>
+        contact._id === updatedContact._id ? updatedContact : contact
+      )
+    );
+    // getEmergencyContacts();
+    // Close the modal after saving changes
+    setEditingContact(null);
+
+    // Optional: Show a success toast
+    toast.success("Contact updated successfully!");
+  }}
+/>
+
     </div>
   );
 };

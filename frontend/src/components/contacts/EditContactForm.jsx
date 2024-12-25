@@ -49,13 +49,14 @@ const handleEdit=async(contactId)=>{
             } 
         }
       } catch (error) {
-        
+        console.error("Error updating contact: ", error);
+        alert("Something went wrong. Please try again.");
       }
     }
   }
 }
 
-console.log(contactDetails)
+// console.log(contactDetails)
   useEffect(() => {
     if (contact) {
       setContactDetails({
