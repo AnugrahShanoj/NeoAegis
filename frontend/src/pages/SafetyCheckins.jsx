@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -23,48 +23,76 @@ import {
 import { Badge } from "@/components/ui/badge";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
+import { addSafetyCheckinAPI, getSafetyCheckins } from "../../Services/allAPI";
 
 const SafetyCheckins = () => {
-  const [checkins, setCheckins] = useState([
-    {
-      id: 1,
-      time: "09:00",
-      status: "completed",
-      note: "Morning check-in",
-      date: new Date(),
-    },
-    {
-      id: 2,
-      time: "18:00",
-      status: "pending",
-      note: "Evening check-in",
-      date: new Date(),
-    },
-  ]);
+  const [isModalOpen, setIsModalOpen]=useState(false)
+  const [checkins, setCheckins] = useState([]);
 
   const [newCheckin, setNewCheckin] = useState({
     time: "",
     note: "",
   });
 
-  const handleAddCheckin = () => {
+  const [token,setToken]=useState("")
+
+  const handleAddCheckin = async() => {
     if (!newCheckin.time) {
       toast.error("Please select a time for the check-in");
       return;
     }
 
-    const checkin = {
-      id: Date.now(),
-      time: newCheckin.time,
-      status: "pending",
-      note: newCheckin.note,
-      date: new Date(),
-    };
+    if(token){
+      const reqHeader={
+        "Authorization":`Bearer ${token}`
+      }
+      const reqBody={
+        "time":newCheckin.time,
+        "note":newCheckin.note
+      }
 
-    setCheckins([...checkins, checkin]);
-    setNewCheckin({ time: "", note: "" });
-    toast.success("Check-in scheduled successfully");
+      try {
+        const response= await addSafetyCheckinAPI(reqBody,reqHeader)
+        console.log(response)
+        if(response.status==200){
+          alert("Safety Check-in Added Successfully.")
+          setNewCheckin({ time: "", note: "" });
+          setIsModalOpen(false)
+        }
+        else{
+          alert("Failed to add Safety Check-in")
+        }
+      } catch (error) {
+        console.log("Error while adding safety checkin: ", error)
+      }
+    }
+
   };
+
+  const handleGetCheckins=async()=>{
+    if(token){
+      const reqHeader={
+        "Authorization":`Bearer ${token}`
+      }
+      try {
+        const response= await getSafetyCheckins(reqHeader)
+      console.log(response)
+      if(response.status==200){
+        const formattedCheckins = response.data.map((checkin) => ({
+          ...checkin,
+          formattedTime: format(new Date(checkin.checkInTime), "HH:mm"), // Format the time
+          formattedDate: format(new Date(checkin.checkInTime), "MMM d, yyyy"), // Format the date
+        }));
+        setCheckins(formattedCheckins); // Update the state with formatted data
+      }
+      else{
+        alert("Failed to get Safety Checkins")
+      }
+      } catch (error) {
+        console.log("Error occured while getting checkins: ",error)
+      }
+    }
+  }
 
   const handleDeleteCheckin = (id) => {
     setCheckins(checkins.filter((checkin) => checkin.id !== id));
@@ -72,7 +100,7 @@ const SafetyCheckins = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "completed":
         return "bg-green-500";
       case "pending":
@@ -83,6 +111,11 @@ const SafetyCheckins = () => {
         return "bg-gray-500";
     }
   };
+
+  useEffect(()=>{
+    setToken(sessionStorage.getItem("token"))
+    handleGetCheckins()
+  },[token])
 
   return (
     <div className="flex h-screen bg-neutral-300/40 ">
@@ -106,9 +139,9 @@ const SafetyCheckins = () => {
             <div className="grid gap-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-800">Scheduled Check-ins</h2>
-                <Dialog>
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="gap-2">
+                    <Button className="gap-2" onClick={()=>setIsModalOpen(true)}>
                       <Plus className="h-4 w-4" />
                       Add Check-in
                     </Button>
@@ -161,7 +194,7 @@ const SafetyCheckins = () => {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {checkins.map((checkin) => (
                   <motion.div
-                    key={checkin.id}
+                    key={checkin._id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.2 }}
@@ -169,28 +202,27 @@ const SafetyCheckins = () => {
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold text-lg">{checkin.time}</h3>
+                        <h3 className="font-semibold text-lg">{checkin.formattedTime}</h3>
                         <p className="text-sm text-gray-500">
-                          {format(checkin.date, "MMM d, yyyy")}
+                          {checkin.formattedDate}
                         </p>
                       </div>
                       <Badge
                         className={`${getStatusColor(
-                          checkin.status
+                          checkin.checkInStatus
                         )} capitalize`}
                       >
-                        {checkin.status}
+                        {checkin.checkInStatus}
                       </Badge>
                     </div>
-                    {checkin.note && (
-                      <p className="text-sm text-gray-600">{checkin.note}</p>
-                    )}
+                    
+                      <p className="text-sm text-gray-600">{checkin.checkInNote?checkin.checkInNote:"No Message"}</p>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        onClick={() => toast.info("Edit functionality coming soon")}
+                        onClick={() => alert("Edit functionality coming soon")}
                       >
                         <Edit2 className="h-4 w-4 mr-2" />
                         Edit
@@ -199,7 +231,7 @@ const SafetyCheckins = () => {
                         variant="outline"
                         size="sm"
                         className="w-full text-red-600 hover:text-red-700"
-                        onClick={() => handleDeleteCheckin(checkin.id)}
+                        onClick={() => handleDeleteCheckin(checkin._id)}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete

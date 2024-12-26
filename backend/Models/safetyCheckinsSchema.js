@@ -6,7 +6,6 @@ const safetyCheckinsSchema= new mongoose.Schema({
     },
     checkInNote:{
         type:String,
-        required:true
     },
     checkInStatus:{
         type:String,

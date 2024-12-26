@@ -8,6 +8,7 @@ const paymentController=require('../Controller/paymentController')
 const smsController=require('../Controller/smsController')
 const emergencyContactController=require('../Controller/emergencyContactController')
 const jwtMiddlewares = require('../Middleware/jwtMiddleware')
+const safetyCheckinController= require('../Controller/safetyCheckinController')
 
 // Create a router using express router
 const router=express.Router()
@@ -48,6 +49,13 @@ router.delete('/deleteEmergencyContact/:contactId',jwtMiddlewares,emergencyConta
 
 // 9 Route for handling Edit an emergency contact
 router.put('/editEmergencyContact/:contactId',jwtMiddlewares,emergencyContactController.editEmergencyContact)
+
+
+// 10 Route for handling Add a Safety Check-in
+router.post('/addSafetyCheckin',jwtMiddlewares, safetyCheckinController.addSafetyCheckin)
+
+// 11 Route for handling Get All Safety Check-in
+router.get('/getSafetyCheckins',jwtMiddlewares,safetyCheckinController.getSafetyCheckins)
 
 
 // Export the router    

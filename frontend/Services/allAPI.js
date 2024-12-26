@@ -45,3 +45,13 @@ export const editEmergencyContactAPI= async(contactId,reqBody,reqHeader)=>{
 export const testAlertAPI=async(reqBody,reqHeader)=>{
    return await commonAPI('post',`${serverUrl}/sms/request`,reqBody,reqHeader)
 }
+
+// 10 API call for add a safety check-in
+export const addSafetyCheckinAPI=async(reqBody,reqHeader)=>{
+   return await commonAPI('post',`${serverUrl}/addSafetyCheckin`,reqBody,reqHeader)
+}
+
+// 11 API call for get all safety checkins
+export const getSafetyCheckins=async(reqHeader)=>{
+   return await commonAPI('get',`${serverUrl}/getSafetyCheckins`,"",reqHeader)
+}
