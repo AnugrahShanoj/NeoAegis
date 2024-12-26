@@ -55,3 +55,18 @@ export const addSafetyCheckinAPI=async(reqBody,reqHeader)=>{
 export const getSafetyCheckins=async(reqHeader)=>{
    return await commonAPI('get',`${serverUrl}/getSafetyCheckins`,"",reqHeader)
 }
+
+// 12 API call for edit a safety checkin 
+export const editSafetyCheckinAPI= async(checkinId,reqBody,reqHeader)=>{
+   return await commonAPI('put',`${serverUrl}/editSafetyCheckin/${checkinId}`,reqBody,reqHeader)
+}
+
+// 13 API call for check now
+export const checkNowAPI=async(checkinId,reqHeader)=>{
+   return await commonAPI('get',`${serverUrl}/checkNow/${checkinId}`,"",reqHeader)
+}
+
+// 14 Route for handling delete of a safety checkin
+export const deleteSafetyCheckinAPI=async(checkinId,reqHeader)=>{
+   return await commonAPI('delete',`${serverUrl}/deleteSafetyCheckin/${checkinId}`,"",reqHeader)
+}

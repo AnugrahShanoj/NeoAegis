@@ -5,52 +5,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { addEmergencyContactAPI } from "../../../Services/allAPI";
 const AddContactForm = ({ open, onOpenChange }) => {
-  // const [formData, setFormData] = useState({
-  //   name: "",
-  //   phone: "",
-  //   email: ""
-  // });
-  // const [errors, setErrors] = useState({});
-  // const validateForm = () => {
-  //   const newErrors = {};
-  //   if (!formData.name.trim()) newErrors.name = "Name is required";
-  //   if (!formData.phone.trim()) {
-  //     newErrors.phone = "Phone number is required";
-  //   } else if (!/^\+?[\d\s-]{10,}$/.test(formData.phone.trim())) {
-  //     newErrors.phone = "Invalid phone number format";
-  //   }
-  //   if (!formData.email.trim()) {
-  //     newErrors.email = "Email is required";
-  //   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-  //     newErrors.email = "Invalid email format";
-  //   }
-  //   setErrors(newErrors);
-  //   return Object.keys(newErrors).length === 0;
-  // };
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   if (validateForm()) {
-  //     // Here you would typically save the contact
-  //     toast.success("Contact added successfully");
-  //     onOpenChange(false);
-  //     setFormData({ name: "", phone: "", email: "" });
-  //   }
-  // };
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     [name]: value
-  //   }));
-  //   // Clear error when user starts typing
-  //   if (errors[name]) {
-  //     setErrors(prev => ({
-  //       ...prev,
-  //       [name]: ""
-  //     }));
-  //   }
-  // };
-
   const [contactDetails,setContactDetails]=useState({
     fullname:"",
     phoneNumber:"",

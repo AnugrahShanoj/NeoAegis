@@ -154,7 +154,7 @@ console.log(selectedContacts)
     setEditingContact(null);
 
     // Optional: Show a success toast
-    toast.success("Contact updated successfully!");
+    // toast.success("Contact updated successfully!");
   }}
 />
 

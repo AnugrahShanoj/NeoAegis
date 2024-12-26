@@ -23,12 +23,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
-import { addSafetyCheckinAPI, getSafetyCheckins } from "../../Services/allAPI";
+import { addSafetyCheckinAPI,  checkNowAPI,  deleteSafetyCheckinAPI,  getSafetyCheckins } from "../../Services/allAPI";
+import EditSafetyCheckin from "../components/EditSafetyCheckin";
 
 const SafetyCheckins = () => {
   const [isModalOpen, setIsModalOpen]=useState(false)
   const [checkins, setCheckins] = useState([]);
-
+  const [editCheckin, setEditCheckin]=useState(null)
   const [newCheckin, setNewCheckin] = useState({
     time: "",
     note: "",
@@ -94,9 +95,58 @@ const SafetyCheckins = () => {
     }
   }
 
-  const handleDeleteCheckin = (id) => {
-    setCheckins(checkins.filter((checkin) => checkin.id !== id));
-    toast.success("Check-in deleted successfully");
+
+  // Handle Check Now Button
+  const canCheckIn = (checkInTime) => {
+    const now = new Date();
+    const checkInWindowStart = new Date(checkInTime);
+    checkInWindowStart.setMinutes(checkInWindowStart.getMinutes() - 15);
+    const checkInWindowEnd = new Date(checkInTime);
+    checkInWindowEnd.setMinutes(checkInWindowEnd.getMinutes() + 15);
+  
+    return now >= checkInWindowStart && now <= checkInWindowEnd;
+  };
+
+  const handleCheckIn=async(checkinId)=>{
+    if(token){
+      const reqHeader={
+        "Authorization":`Bearer ${token}`
+      }
+      try {
+        const response= await checkNowAPI(checkinId, reqHeader)
+        console.log(response)
+        if(response.status==200){
+          alert("Checkin Successful")
+          handleGetCheckins()
+        }
+        else{
+          alert("Failed to Checkin")
+        }
+      } catch (error) {
+        console.log("Error while checking now.", error)
+      }
+  }
+}
+
+  const handleDeleteCheckin = async(checkinId) => {
+    if(token){
+      const reqHeader = {
+        "Authorization": `Bearer ${token}`
+      }
+      try {
+        const response= await deleteSafetyCheckinAPI(checkinId,reqHeader)
+        console.log(response)
+        if(response.status==200){
+          alert("Checkin Deleted")
+          handleGetCheckins()
+        }
+        else{
+          alert("Failed to Delete Checkin")
+        }
+      } catch (error) {
+        console.log("Error while delete a safety checkin: ",error)
+      }
+    }
   };
 
   const getStatusColor = (status) => {
@@ -222,7 +272,7 @@ const SafetyCheckins = () => {
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        onClick={() => alert("Edit functionality coming soon")}
+                        onClick={() => setEditCheckin(checkin)}
                       >
                         <Edit2 className="h-4 w-4 mr-2" />
                         Edit
@@ -237,6 +287,16 @@ const SafetyCheckins = () => {
                         Delete
                       </Button>
                     </div>
+                    {canCheckIn(checkin.checkInTime) && checkin.checkInStatus === "Pending" && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleCheckIn(checkin._id)}
+                        >
+                          Check-In Now
+                        </Button>
+                      )}
                   </motion.div>
                 ))}
               </div>
@@ -245,6 +305,31 @@ const SafetyCheckins = () => {
           </LayoutWrapper>
         </div>
       </div>
+
+      <EditSafetyCheckin
+  checkin={editCheckin} // Pass the contact to be edited
+  open={!!editCheckin} // Control modal visibility
+  onOpenChange={(open) => {
+    if (!open) setEditCheckin(null); // Close modal and reset state
+  }}
+  onSave={(updatedCheckin) => {
+    if(!updatedCheckin || !updatedCheckin._id){
+      console.error("Updated checkin is missing _id");
+      return;
+    }
+    // Update the contacts state in real-time
+    setCheckins((prevCheckin) =>
+      prevCheckin.map((checkin) =>
+        checkin._id === updatedCheckin._id ? updatedCheckin : checkin
+      )
+    );
+    // Close the modal after saving changes
+    setEditCheckin(null);
+
+    // Optional: Show a success toast
+    // toast.success("Contact updated successfully!");
+  }}
+/>
     </div>
   );
 };

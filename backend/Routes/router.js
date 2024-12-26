@@ -57,6 +57,15 @@ router.post('/addSafetyCheckin',jwtMiddlewares, safetyCheckinController.addSafet
 // 11 Route for handling Get All Safety Check-in
 router.get('/getSafetyCheckins',jwtMiddlewares,safetyCheckinController.getSafetyCheckins)
 
+// 12 Route for handling Edit a Safety Checkin
+router.put('/editSafetyCheckin/:checkinId',jwtMiddlewares,safetyCheckinController.editSafetyCheckin)
+
+// 13 Route for handling check now
+router.patch('/checkNow/:checkinId',jwtMiddlewares,safetyCheckinController.checkNow)
+
+// 14 Route for handling Delete a Safety Checkin
+router.delete('/deleteSafetyCheckin/:checkinId',jwtMiddlewares,safetyCheckinController.deleteSafetyCheckin)
+
 
 // Export the router    
 module.exports=router
