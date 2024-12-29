@@ -42,7 +42,7 @@ export const editEmergencyContactAPI= async(contactId,reqBody,reqHeader)=>{
 
 
 // 9 API call for test alert to emergency contacts
-export const testAlertAPI=async(reqBody,reqHeader)=>{
+export const smsAPI=async(reqBody,reqHeader)=>{
    return await commonAPI('post',`${serverUrl}/sms/request`,reqBody,reqHeader)
 }
 
@@ -69,4 +69,9 @@ export const checkNowAPI=async(checkinId,reqHeader)=>{
 // 14 Route for handling delete of a safety checkin
 export const deleteSafetyCheckinAPI=async(checkinId,reqHeader)=>{
    return await commonAPI('delete',`${serverUrl}/deleteSafetyCheckin/${checkinId}`,"",reqHeader)
+}
+
+// 15 Route for handling a new SOS Alert
+export const createSOSAlertAPI= async(reqBody,reqHeader)=>{
+   return await commonAPI('post',`${serverUrl}/SOSAlert`,reqBody,reqHeader)
 }

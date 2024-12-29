@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardSidebar from "../components/Dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
-import { testAlertAPI } from "../../Services/allAPI";
+import { smsAPI } from "../../Services/allAPI";
 const EmergencyContacts = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState([]);
@@ -26,7 +26,7 @@ const EmergencyContacts = () => {
       const reqBody={
         msg:"This is a Test Alert."
       }
-      const response= await testAlertAPI(reqBody,reqHeader)
+      const response= await smsAPI(reqBody,reqHeader)
       console.log(response)
       if(response.status==200){
         alert(`Test alert sent to ${selectedContacts.length} contacts`);

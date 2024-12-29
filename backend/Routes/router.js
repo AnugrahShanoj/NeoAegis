@@ -9,6 +9,7 @@ const smsController=require('../Controller/smsController')
 const emergencyContactController=require('../Controller/emergencyContactController')
 const jwtMiddlewares = require('../Middleware/jwtMiddleware')
 const safetyCheckinController= require('../Controller/safetyCheckinController')
+const sosAlertController= require('../Controller/sosAlertController')
 
 // Create a router using express router
 const router=express.Router()
@@ -66,6 +67,8 @@ router.patch('/checkNow/:checkinId',jwtMiddlewares,safetyCheckinController.check
 // 14 Route for handling Delete a Safety Checkin
 router.delete('/deleteSafetyCheckin/:checkinId',jwtMiddlewares,safetyCheckinController.deleteSafetyCheckin)
 
+// 15 Route for handling SOS Alert Creation
+router.post('/SOSAlert',jwtMiddlewares,sosAlertController.createSOSAlert)
 
 // Export the router    
 module.exports=router
