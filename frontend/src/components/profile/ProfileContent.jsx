@@ -16,7 +16,7 @@ const ProfileContent = () => {
         
         <div className="space-y-6">
           <UserInfo />
-          <Settings />
+          {/* <Settings /> */}
           <ActivityLogs />
         </div>
       </motion.div>

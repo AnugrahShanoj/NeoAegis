@@ -77,5 +77,8 @@ router.get('/getSOSAlerts',jwtMiddlewares,sosAlertController.getSOSAlerts)
 // 17 Route for handling Update User Profile
 router.put('/editUserProfile',jwtMiddlewares,multerMiddleware.single('profilePic'),userController.updateUserProfile)
 
+// 18 Route for handling Get User Details
+router.get('/getUserDetails',jwtMiddlewares,userController.getUserDetails)
+
 // Export the router    
 module.exports=router

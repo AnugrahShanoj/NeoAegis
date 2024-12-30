@@ -113,7 +113,7 @@ exports.googleAuthCallback = async (req, res) => {
     console.log("Inside Update User Profile");
     const { username, password, gender, dateOfBirth } = req.body;
     const { userId } = req.payload;
-    const profilePic = req.file ? req.file.filename : null;
+    const profilePic = req.file && req.file.filename;
 
     try {
         // Find user by ID
@@ -143,3 +143,19 @@ exports.googleAuthCallback = async (req, res) => {
     }
 };
 
+
+
+
+// Logic for getting user details
+exports.getUserDetails = async (req, res) => {
+    console.log("Inside Get User Details");
+    const { userId } = req.payload;
+    try {
+        const User= await users.findById(userId)
+        res.status(200).json({User:User})
+
+    } catch (error) {
+        console.log("Server Error: ",error)
+        res.status(500).json("Server Error while getting user details")
+    }
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,48 +7,68 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Camera } from "lucide-react";
+import { getUserDetailsAPI, updateProfileAPI } from "../../../Services/allAPI";
 
 const UserInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState("Username");
-  const [email] = useState("abc@gmail.com");
-  const [password, setPassword] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [dob, setDob] = useState("");
+  // const [name, setName] = useState("Username");
+  // const [email] = useState("abc@gmail.com");
+  // const [password, setPassword] = useState("");
+  // const [gender, setGender] = useState("Male");
+  // const [dob, setDob] = useState("");
   const [avatar, setAvatar] = useState("/placeholder.svg");
+  const [token, setToken]=useState("")
+  const [userDetails, setUserDetails]=useState({})
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
-      }
-      if (!["image/jpeg", "image/png"].includes(file.type)) {
-        toast.error("Only JPEG and PNG formats are supported");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result);
-        toast.success("Profile picture updated successfully");
-      };
-      reader.readAsDataURL(file);
+ const handleGetUser= async()=>{
+  if(token){
+      const reqHeader = {
+        "Authorization": `Bearer ${token}`,
     }
-  };
+    try {
+      const response= await getUserDetailsAPI(reqHeader)
+    console.log(response)
+    if(response.status==200){
+      setUserDetails(response.data.User)
+      setAvatar(response.data.User.profilePic)
+    }
+    else{
+      alert("Cannot Fetch User Details")
+    }
+    } catch (error) {
+      console.log("Error in fetching user details: ",error)
+    }
+  }
+ }
 
-  const handleSave = () => {
-    if (name.trim().length < 2) {
-      toast.error("Name should be at least 2 characters long");
-      return;
+ // Function to edit User Details
+ const handleUserEdit= async()=>{
+  const {username, password, profilePic, gender, dateOfBirth}= userDetails
+  const reqBody= new FormData()
+  reqBody.append("username",username)
+  reqBody.append("password",password)
+  reqBody.append("profilePic",profilePic)
+  reqBody.append("gender",gender)
+  reqBody.append("dateOfBirth",dateOfBirth)
+
+  if(token){
+    const reqHeader={
+      'Content-Type':`multipart/form-data`,
+      'Authorization':`Bearer ${token}`
     }
-    if (password.trim().length < 6) {
-      toast.error("Password should be at least 6 characters long");
-      return;
+    try {
+      const response= await updateProfileAPI(reqBody,reqHeader)
+      console.log(response)
+    } catch (error) {
+      console.log("Error while updating user profile: ",error)
     }
-    setIsEditing(false);
-    toast.success("Profile updated successfully");
-  };
+  }
+ }
+// console.log(userDetails)
+ useEffect(()=>{
+  setToken(sessionStorage.getItem('token'))
+  handleGetUser()
+ },[token,userDetails.profilePic])
 
   return (
     <motion.div
@@ -77,7 +97,7 @@ const UserInfo = () => {
                   type="file"
                   className="hidden"
                   accept="image/jpeg,image/png"
-                  onChange={handleImageUpload}
+                  onChange={(e)=>setUserDetails({...userDetails, profilePic:e.target.files[0]})}
                 />
               </label>
             </div>
@@ -86,8 +106,8 @@ const UserInfo = () => {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={userDetails.username}
+                  onChange={(e) => setUserDetails({...userDetails, username:e.target.value})}
                   disabled={!isEditing}
                   className="max-w-md"
                 />
@@ -96,7 +116,7 @@ const UserInfo = () => {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  value={email}
+                  value={userDetails.email}
                   disabled
                   className="max-w-md bg-neutral-50"
                 />
@@ -106,8 +126,8 @@ const UserInfo = () => {
                 <Input
                   id="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={userDetails.password}
+                  onChange={(e) => setUserDetails({...userDetails, password:e.target.value})}
                   disabled={!isEditing}
                   className="max-w-md"
                 />
@@ -115,10 +135,10 @@ const UserInfo = () => {
               <div className="flex gap-4"> {/* Flex container for gender and dob */}
                 <div className="space-y-2 flex-1">
                   <Label htmlFor="gender">Gender</Label>
- <select
+                  <select
                     id="gender"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
+                    value={userDetails.gender}
+                    onChange={(e) => setUserDetails({...userDetails, gender:e.target.value})}
                     disabled={!isEditing}
                     className="border  rounded p-2 w-full"
                   >
@@ -132,8 +152,8 @@ const UserInfo = () => {
                   <Input
                     id="dob"
                     type="date"
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
+                    value={userDetails.dateOfBirth}
+                    onChange={(e) => setUserDetails({...userDetails, dateOfBirth:e.target.value})}
                     disabled={!isEditing}
                     className="max-w-md"
                   />
@@ -143,7 +163,7 @@ const UserInfo = () => {
           </div>
           <div className="flex justify-end">
             {isEditing ? (
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleUserEdit} >Save Changes</Button>
             ) : (
               <Button onClick={() => setIsEditing(true)}>Edit</Button>
             )}

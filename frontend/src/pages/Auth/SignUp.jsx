@@ -58,16 +58,32 @@ const SignUp = () => {
             },4000)
         }
         else{
-          toast.error(response.response.data.message, {
-            position: "top-center",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-            });
+          if(response.response.data.message){
+            if(response.response.data.message.errors.email){
+              toast.error(response.response.data.message.errors.email.message, {
+                position: "top-center",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+                });
+            }
+            else{
+              toast.error(response.response.data.message, {
+                position: "top-center",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+                });
+            } 
+            }
         }
       }
       catch(err){

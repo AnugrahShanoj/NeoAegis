@@ -81,3 +81,13 @@ export const createSOSAlertAPI= async(reqBody,reqHeader)=>{
 export const getSOSAlertsAPI= async(reqHeader)=>{
    return await commonAPI('get',`${serverUrl}/getSOSAlerts`,"",reqHeader)
 }
+
+// 17 Route for handling update User Profile
+export const updateProfileAPI= async(reqBody,reqHeader)=>{
+   return await commonAPI('put',`${serverUrl}/editUserProfile`,reqBody,reqHeader)
+}
+
+// 18 Route for handling get user details
+export const getUserDetailsAPI= async(reqHeader)=>{
+   return await commonAPI('get',`${serverUrl}/getUserDetails`,"",reqHeader)
+}
