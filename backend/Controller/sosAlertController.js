@@ -38,3 +38,19 @@ exports.createSOSAlert = async (req, res) => {
     });
   }
 };
+
+
+
+// Logic for get the SOS Alerts
+exports.getSOSAlerts= async(req,res)=>{
+  try {
+      const {userId}=req.payload
+      const alerts = await SOSAlert.find({ userId });
+      // Sort the alerts in newly created first
+      const sortedAlerts=alerts.sort((a, b) => b.createdAt - a.createdAt);
+      res.status(200).json(sortedAlerts);
+  } catch (error) {
+    console.log("Server Error: ",error)
+    res.status(500).json({message:"Internal Server Error",error:error.message})
+  }
+}

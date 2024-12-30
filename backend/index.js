@@ -34,7 +34,7 @@ serverApp.use(cors())
 serverApp.use(router)
 serverApp.use(passport.initialize());
 serverApp.use(passport.session());
-
+serverApp.use('/Uploads',express.static('./Uploads'))
 
 // Define PORT
 const PORT= 3000 || process.env.PORT

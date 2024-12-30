@@ -42,6 +42,7 @@ const userSchema= new mongoose.Schema({
     },
     profilePic:{
         type:String,
+        default:'https://png.pngtree.com/png-vector/20210604/ourmid/pngtree-gray-avatar-placeholder-png-image_3416697.jpg'
     },
     createdAt:{
         type:Date,
@@ -52,6 +53,15 @@ const userSchema= new mongoose.Schema({
         unique: true,
         sparse: true, // Allows null or undefined values
       },
+      gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        default: null
+    },
+    dateOfBirth: {
+        type: Date,
+        default: null
+    },
       
 })
 

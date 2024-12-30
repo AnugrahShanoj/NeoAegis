@@ -24,29 +24,14 @@ import {
 } from "@/components/ui/select";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
-import { createSOSAlertAPI, smsAPI } from "../../Services/allAPI";
+import { createSOSAlertAPI, getSOSAlertsAPI, smsAPI } from "../../Services/allAPI";
 const SOSAlerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
   const [filter, setFilter] = useState("all");
   const [token,setToken]=useState("")
   // Sample alert history data
-  const alertHistory = [
-    {
-      id: 1,
-      timestamp: "2024-03-15T14:30:00",
-      location: "123 Main St, City",
-      status: "resolved",
-      message: "Medical emergency, need immediate assistance",
-    },
-    {
-      id: 2,
-      timestamp: "2024-03-14T09:15:00",
-      location: "456 Park Ave, Town",
-      status: "acknowledged",
-      message: "Feeling unsafe, requesting help",
-    },
-  ];
+  const [alertHistory, setAlertHistory]=useState([])
 
   // Function to get the current location
 const getLocation = () => {
@@ -138,6 +123,7 @@ const handleSendAlert = async () => {
           alert("Alert Not Sent")
           setCustomMessage("");
           setIsDialogOpen(false);
+          getAllSOSAlerts()
         }
       }
       else{
@@ -151,12 +137,36 @@ const handleSendAlert = async () => {
     console.error('Error in handleSendAlert:', error);
   }
 };
+
+
+  // Function to get all SOS Alerts
+  const getAllSOSAlerts = async () => {
+    try {
+      if(token){
+        const reqHeader = {
+          "Authorization": `Bearer ${token}`,
+        }
+        const response= await getSOSAlertsAPI(reqHeader)
+        console.log(response)
+        if(response.status==200){
+          setAlertHistory(response.data)
+        }
+        else{
+          alert("Error fetching SOS Alerts")
+        }
+      }
+    } catch (error) {
+      alert("Server Error while fetching SOS Alerts")
+    }
+  }
+
   const filteredAlerts = alertHistory.filter(
     (alert) => filter === "all" || alert.status === filter
   );
 
 useEffect(()=>{
   setToken(sessionStorage.getItem('token'))
+  getAllSOSAlerts()
 },[token])
 
   return (
@@ -222,8 +232,9 @@ useEffect(()=>{
                   </SelectTrigger>
                   <SelectContent className='bg-white'>
                     <SelectItem value="all">All Alerts</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                    <SelectItem value="Resolved">Resolved</SelectItem>
+                    <SelectItem value="Acknowledged">Acknowledged</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </CardHeader>
@@ -231,7 +242,7 @@ useEffect(()=>{
                 <div className="space-y-4">
                   {filteredAlerts.map((alert) => (
                     <div
-                      key={alert.id}
+                      key={alert._id}
                       className="p-4 rounded-lg border bg-white hover:shadow-md transition-shadow"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -242,13 +253,13 @@ useEffect(()=>{
                           <p className="font-medium">{alert.message}</p>
                           <div className="flex items-center gap-2 text-sm text-neutral-600">
                             <MapPin className="h-4 w-4" />
-                            {alert.location}
+                            {alert.location.city}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span
                             className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              alert.status === "resolved"
+                              alert.status === "Resolved"
                                 ? "bg-green-100 text-green-700"
                                 : "bg-blue-100 text-blue-700"
                             }`}

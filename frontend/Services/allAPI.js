@@ -75,3 +75,9 @@ export const deleteSafetyCheckinAPI=async(checkinId,reqHeader)=>{
 export const createSOSAlertAPI= async(reqBody,reqHeader)=>{
    return await commonAPI('post',`${serverUrl}/SOSAlert`,reqBody,reqHeader)
 }
+
+
+// 16 Route for handling get SOS Alerts
+export const getSOSAlertsAPI= async(reqHeader)=>{
+   return await commonAPI('get',`${serverUrl}/getSOSAlerts`,"",reqHeader)
+}

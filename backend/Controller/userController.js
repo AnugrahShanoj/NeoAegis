@@ -24,7 +24,6 @@ exports.registerAPI=async(req,res)=>{
                 paymentStatus:false,
                 paymentId:"",
                 isActive:true,
-                profilePic:"",
             })
             await newUser.save()
             res.status(200).json({message:"User Registered Successfully",
@@ -108,3 +107,39 @@ exports.googleAuthCallback = async (req, res) => {
     }
   }
   
+
+  // Logic for updating the user profile
+  exports.updateUserProfile = async (req, res) => {
+    console.log("Inside Update User Profile");
+    const { username, password, gender, dateOfBirth } = req.body;
+    const { userId } = req.payload;
+    const profilePic = req.file ? req.file.filename : null;
+
+    try {
+        // Find user by ID
+        const User = await users.findById(userId);
+
+        if (!User) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update fields
+        if (username) User.username = username;
+        if (password) User.password = password; // Password will be hashed by pre('save') middleware
+        if (gender) User.gender = gender;
+        if (dateOfBirth) User.dateOfBirth = dateOfBirth;
+        if (profilePic) User.profilePic = profilePic;
+
+        // Save updated user
+        await User.save();
+
+        res.status(200).json({
+            message: 'User Profile Updated Successfully',
+            User
+        });
+    } catch (error) {
+        console.log("Server Error: ", error);
+        res.status(406).json(error);
+    }
+};
+

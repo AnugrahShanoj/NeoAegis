@@ -8,6 +8,7 @@ const paymentController=require('../Controller/paymentController')
 const smsController=require('../Controller/smsController')
 const emergencyContactController=require('../Controller/emergencyContactController')
 const jwtMiddlewares = require('../Middleware/jwtMiddleware')
+const multerMiddleware= require('../Middleware/multerMiddleware')
 const safetyCheckinController= require('../Controller/safetyCheckinController')
 const sosAlertController= require('../Controller/sosAlertController')
 
@@ -69,6 +70,12 @@ router.delete('/deleteSafetyCheckin/:checkinId',jwtMiddlewares,safetyCheckinCont
 
 // 15 Route for handling SOS Alert Creation
 router.post('/SOSAlert',jwtMiddlewares,sosAlertController.createSOSAlert)
+
+// 16 Route for handling Get SOS Alerts
+router.get('/getSOSAlerts',jwtMiddlewares,sosAlertController.getSOSAlerts)
+
+// 17 Route for handling Update User Profile
+router.put('/editUserProfile',jwtMiddlewares,multerMiddleware.single('profilePic'),userController.updateUserProfile)
 
 // Export the router    
 module.exports=router
