@@ -55,8 +55,22 @@ const SignUp = () => {
             });
             setTimeout(()=>{
               navigate('/payment')
-            },4000)
+            },4000)   
         }
+
+        else if(response.status==406){
+          toast.error(response.response.data.message, {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+        }
+        
         else{
           if(response.response.data.message){
             if(response.response.data.message.errors.email){
@@ -71,6 +85,20 @@ const SignUp = () => {
                 theme: "light",
                 });
             }
+
+            else if(response.response.data.message.errors.password){
+              toast.error(response.response.data.message.errors.password.message, {
+                position: "top-center",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+                });
+            }
+            
             else{
               toast.error(response.response.data.message, {
                 position: "top-center",

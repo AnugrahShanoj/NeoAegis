@@ -7,9 +7,6 @@ const jwt=require('jsonwebtoken')
 exports.registerAPI=async(req,res)=>{
     console.log("Inside registerAPI")
     const {username,email,password}=req.body
-    if(password.length<8){
-        return res.status(400).json({message:"Password must be at least 8 characters long"})
-    }
     try{
         const existingUser= await users.findOne({email})
         if(existingUser){
