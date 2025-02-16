@@ -9,7 +9,7 @@ const storage= multer.diskStorage({
     },
     // Setting the file name format
     filename: (req,file,callback)=>{
-        callback(null,`Profile-${file.originalname}`)
+        callback(null,`Profile-${Date.now()}-${file.originalname}`)
     }
 })
 

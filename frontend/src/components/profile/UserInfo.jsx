@@ -11,11 +11,7 @@ import { getUserDetailsAPI, updateProfileAPI } from "../../../Services/allAPI";
 
 const UserInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
-  // const [name, setName] = useState("Username");
-  // const [email] = useState("abc@gmail.com");
-  // const [password, setPassword] = useState("");
-  // const [gender, setGender] = useState("Male");
-  // const [dob, setDob] = useState("");
+ 
   const [avatar, setAvatar] = useState("/placeholder.svg");
   const [token, setToken]=useState("")
   const [userDetails, setUserDetails]=useState({})
@@ -43,13 +39,17 @@ const UserInfo = () => {
 
  // Function to edit User Details
  const handleUserEdit= async()=>{
+  console.log("User Details: ",userDetails)
   const {username, password, profilePic, gender, dateOfBirth}= userDetails
   const reqBody= new FormData()
   reqBody.append("username",username)
   reqBody.append("password",password)
   reqBody.append("profilePic",profilePic)
   reqBody.append("gender",gender)
-  reqBody.append("dateOfBirth",dateOfBirth)
+ // Convert dateOfBirth to proper Date format
+ if (dateOfBirth) {
+  reqBody.append("dateOfBirth", new Date(dateOfBirth).toISOString());
+}
 
   if(token){
     const reqHeader={
@@ -68,7 +68,7 @@ const UserInfo = () => {
  useEffect(()=>{
   setToken(sessionStorage.getItem('token'))
   handleGetUser()
- },[token,userDetails.profilePic])
+ },[token])
 
   return (
     <motion.div
@@ -85,7 +85,7 @@ const UserInfo = () => {
             <div className="relative">
               <Avatar className="w-32 h-32"> {/* Increased size of Avatar */}
                 <AvatarImage src={avatar} alt="Profile" />
-                <AvatarFallback>AP</AvatarFallback>
+                {/* <AvatarFallback>AP</AvatarFallback> */}
               </Avatar>
               <label 
                 htmlFor="avatar-upload" 
@@ -142,6 +142,7 @@ const UserInfo = () => {
                     disabled={!isEditing}
                     className="border  rounded p-2 w-full"
                   >
+                    <option>Select A Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -152,7 +153,7 @@ const UserInfo = () => {
                   <Input
                     id="dob"
                     type="date"
-                    value={userDetails.dateOfBirth}
+                    // value={userDetails.dateOfBirth}
                     onChange={(e) => setUserDetails({...userDetails, dateOfBirth:e.target.value})}
                     disabled={!isEditing}
                     className="max-w-md"

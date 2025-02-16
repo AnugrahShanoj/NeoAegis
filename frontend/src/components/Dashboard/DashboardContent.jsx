@@ -46,7 +46,6 @@ const DashboardContent = () => {
               variant="destructive"
               size="lg"
               className="bg-red-600 hover:bg-red-700 px-8 py-6 shadow-lg text-white"
-              onClick={() => alert("SOS Alert triggered - This is a demo")}
             >
               <span className="flex items-center gap-3 text-lg font-bold">
                 <motion.div

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 
-const WelcomeHeader = ({ userName = "Anugrah P" }) => {
+const WelcomeHeader = () => {
+  const userName= sessionStorage.getItem("username")
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

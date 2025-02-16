@@ -106,40 +106,50 @@ exports.googleAuthCallback = async (req, res) => {
   
 
   // Logic for updating the user profile
+//   const bcrypt = require("bcrypt");
+//   const users = require("../models/userSchema");
+  
   exports.updateUserProfile = async (req, res) => {
-    console.log("Inside Update User Profile");
-    const { username, password, gender, dateOfBirth } = req.body;
-    const { userId } = req.payload;
-    const profilePic = req.file && req.file.filename;
-
-    try {
-        // Find user by ID
-        const User = await users.findById(userId);
-
-        if (!User) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Update fields
-        if (username) User.username = username;
-        if (password) User.password = password; // Password will be hashed by pre('save') middleware
-        if (gender) User.gender = gender;
-        if (dateOfBirth) User.dateOfBirth = dateOfBirth;
-        if (profilePic) User.profilePic = profilePic;
-
-        // Save updated user
-        await User.save();
-
-        res.status(200).json({
-            message: 'User Profile Updated Successfully',
-            User
-        });
-    } catch (error) {
-        console.log("Server Error: ", error);
-        res.status(406).json(error);
-    }
-};
-
+      console.log("Inside Update User Profile");
+      const { username, password, gender, dateOfBirth } = req.body;
+      const { userId } = req.payload;
+      const profilePic = req.file && req.file.filename;
+  
+      try {
+          let updateFields = { username, gender, profilePic };
+  
+          // Convert dateOfBirth to proper Date format if provided
+          if (dateOfBirth) {
+              updateFields.dateOfBirth = new Date(dateOfBirth);
+          }
+  
+          // If password is provided, hash it before updating
+          if (password) {
+              const salt = await bcrypt.genSalt(10);
+              const hashedPassword = await bcrypt.hash(password, salt);
+              updateFields.password = hashedPassword;
+          }
+  
+          // Update user profile in the database
+          const User = await users.findByIdAndUpdate(
+              { _id: userId },
+              updateFields,
+              { new: true }
+          );
+  
+          await User.save(); // Ensure changes are saved properly
+  
+          res.status(200).json({
+              message: "User Profile Updated Successfully",
+              User
+          });
+  
+      } catch (error) {
+          console.log("Server Error: ", error);
+          res.status(500).json(error);
+      }
+  };
+  
 
 
 
