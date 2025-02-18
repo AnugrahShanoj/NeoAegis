@@ -58,6 +58,7 @@ exports.getSafetyCheckins= async(req,res)=>{
 
 // Logic for edit a safety checkin
 exports.editSafetyCheckin=async(req,res)=>{
+  console.log("Inside Edit Safety Checkin")
   const {checkinId}= req.params
   console.log('Checkin Id :',checkinId)
   const {time,note}= req.body
