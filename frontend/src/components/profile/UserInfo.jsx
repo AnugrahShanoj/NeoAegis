@@ -8,11 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Camera } from "lucide-react";
 import { getUserDetailsAPI, updateProfileAPI } from "../../../Services/allAPI";
+import { serverUrl } from "../../../Services/serverURL";
 
 const UserInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
  
-  const [avatar, setAvatar] = useState("/placeholder.svg");
+  const [avatar, setAvatar] = useState("");
   const [token, setToken]=useState("")
   const [userDetails, setUserDetails]=useState({})
 
@@ -23,7 +24,7 @@ const UserInfo = () => {
     }
     try {
       const response= await getUserDetailsAPI(reqHeader)
-    console.log(response)
+    // console.log(response)
     if(response.status==200){
       setUserDetails(response.data.User)
       setAvatar(response.data.User.profilePic)
@@ -58,12 +59,15 @@ const UserInfo = () => {
     }
     try {
       const response= await updateProfileAPI(reqBody,reqHeader)
-      console.log(response)
+      // console.log(response)
+      handleGetUser()
+      setIsEditing(false)
     } catch (error) {
       console.log("Error while updating user profile: ",error)
     }
   }
  }
+//  console.log(avatar)
 // console.log(userDetails)
  useEffect(()=>{
   setToken(sessionStorage.getItem('token'))
@@ -83,8 +87,8 @@ const UserInfo = () => {
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
             <div className="relative">
-              <Avatar className="w-32 h-32"> {/* Increased size of Avatar */}
-                <AvatarImage src={avatar} alt="Profile" />
+              <Avatar className="w-32 h-32 border"> {/* Increased size of Avatar */}
+                <AvatarImage src={`${serverUrl}/Uploads/${avatar}`} alt="Profile" />
                 {/* <AvatarFallback>AP</AvatarFallback> */}
               </Avatar>
               <label 
@@ -95,6 +99,7 @@ const UserInfo = () => {
                 <input
                   id="avatar-upload"
                   type="file"
+                  disabled={!isEditing}
                   className="hidden"
                   accept="image/jpeg,image/png"
                   onChange={(e)=>setUserDetails({...userDetails, profilePic:e.target.files[0]})}
@@ -153,7 +158,7 @@ const UserInfo = () => {
                   <Input
                     id="dob"
                     type="date"
-                    // value={userDetails.dateOfBirth}
+                    value={userDetails.dateOfBirth && userDetails.dateOfBirth.slice(0, 10)}
                     onChange={(e) => setUserDetails({...userDetails, dateOfBirth:e.target.value})}
                     disabled={!isEditing}
                     className="max-w-md"

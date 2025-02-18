@@ -106,8 +106,6 @@ exports.googleAuthCallback = async (req, res) => {
   
 
   // Logic for updating the user profile
-//   const bcrypt = require("bcrypt");
-//   const users = require("../models/userSchema");
   
   exports.updateUserProfile = async (req, res) => {
       console.log("Inside Update User Profile");
