@@ -2,7 +2,8 @@ const mongoose= require('mongoose')
 const safetyCheckinsSchema= new mongoose.Schema({
     checkInTime:{
         type:Date,
-        required:true
+        required:true,
+        index:true // Indexing for faster queries
     },
     checkInNote:{
         type:String,
@@ -10,7 +11,8 @@ const safetyCheckinsSchema= new mongoose.Schema({
     checkInStatus:{
         type:String,
         enum:["Pending","Completed","Missed"],
-        default:"Pending"
+        default:"Pending",
+        index:true // Indexing for faster lookups
     },
     userId:{
         type:String
