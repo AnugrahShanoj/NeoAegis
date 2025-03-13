@@ -32,7 +32,7 @@ function EmailBreachBanner() {
           </div>
         </div>
         
-        {/* Glowing orbs for cyber aesthetic */}
+        {/* Enhanced glowing orbs with NeoAegis colors */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20">
           <motion.div 
             className="absolute -left-10 -top-10 w-40 h-40 bg-secondary/50 rounded-full blur-xl"
@@ -43,7 +43,7 @@ function EmailBreachBanner() {
             transition={{ duration: 4, repeat: Infinity }}
           />
           <motion.div 
-            className="absolute right-[20%] top-[20%] w-60 h-60 bg-accent-lightGray/50 rounded-full blur-xl"
+            className="absolute right-[20%] top-[20%] w-60 h-60 bg-primary/50 rounded-full blur-xl"
             animate={{
               scale: [1.2, 1, 1.2],
               opacity: [0.3, 0.2, 0.3] 
@@ -51,7 +51,7 @@ function EmailBreachBanner() {
             transition={{ duration: 5, repeat: Infinity }}
           />
           <motion.div 
-            className="absolute left-[30%] -bottom-20 w-60 h-60 bg-secondary/50 rounded-full blur-xl"
+            className="absolute left-[30%] -bottom-20 w-60 h-60 bg-secondary/40 rounded-full blur-xl"
             animate={{
               scale: [1, 1.1, 1],
               opacity: [0.2, 0.3, 0.2]
@@ -63,7 +63,7 @@ function EmailBreachBanner() {
       
       <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
         <div className="relative flex-shrink-0">
-          <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-lg">
+          <div className="w-20 h-20 bg-gradient-to-br from-primary/80 to-secondary/80 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-lg">
             <div className="relative">
               <motion.div
                 animate={{ rotate: 360 }}
@@ -94,7 +94,7 @@ function EmailBreachBanner() {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 flex flex-wrap items-center gap-2">
             <span className="mr-2">Cyber Identity Protection</span>
             <motion.span
-              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-neutral-400 to-secondary"
+              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-white to-secondary"
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
