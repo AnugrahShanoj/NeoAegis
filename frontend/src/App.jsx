@@ -16,6 +16,7 @@ import UserManagement from "./pages/admin/UserManagement.jsx";
 import EmergencyManagement from "./pages/admin/EmergencyManagement.jsx";
 import SafetyAlertMonitoring from "./pages/admin/SafetyAlertMonitoring.jsx";
 import Payment from "./pages/Payment.jsx";
+import EmailBreach from "./pages/EmailBreach.jsx";
 const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/contacts" element={<EmergencyContacts/>}/>
           <Route path="/checkins" element={<SafetyCheckins/>}/>
           <Route path="/alerts" element={<SOSAlerts/>}/>
+          <Route path="/email-breach" element={<EmailBreach />} />
 
            {/* Admin Routes */}
            <Route path="/admin" element={<AdminLayout />}>

@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Mail, ShieldAlert
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -29,6 +30,7 @@ const menuItems = [
   { title: "Safety Check-ins", icon: MapPin, url: "/checkins" },
   // { title: "Safety Journal", icon: BookOpen, url: "/journal" },
   { title: "SOS Alerts", icon: Bell, url: "/alerts" },
+  {title: "Email Breach", icon: ShieldAlert, url: "/email-breach"},
   { title: "Profile", icon: UserCircle, url: "/profile" },
 ];
 

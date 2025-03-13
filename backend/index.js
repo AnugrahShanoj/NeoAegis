@@ -3,6 +3,10 @@ require('dotenv').config()
 //  Import passport configuration
 require('./Controller/passportConfig'); // Adjust the path to your passportConfig.js
 
+// Import cron
+require("./Scheduler/safetyCheckinJob"); // ✅ Runs the cron job automatically
+
+
 // Import express
 const express=require('express')
 // Import cors
