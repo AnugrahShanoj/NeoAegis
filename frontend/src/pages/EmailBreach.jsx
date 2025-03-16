@@ -161,11 +161,11 @@ function EmailBreach() {
               className="p-4 bg-neutral-100 border border-neutral-200 rounded-lg flex gap-3 items-center"
             >
               <div className="p-2 rounded-full bg-neutral-200">
-                <AlertTriangle className="h-5 w-5 text-primary" />
+                <AlertTriangle className="h-5 w-5 text-secondary" />
               </div>
               <div className="flex-1">
                 <p className="text-sm text-primary">
-                  Data breaches exposed over 4.1 billion records in 2022 alone. Your personal data could be at risk.
+                  Data breaches exposed over 5.1 billion records in 2025 alone. Your personal data could be at risk.
                 </p>
               </div>
               <button 
@@ -180,8 +180,8 @@ function EmailBreach() {
           <div className="glass-panel p-6 md:p-8 rounded-xl relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-neutral-50/50 to-neutral-100/50 z-0"></div>
             <div className="relative z-10">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-primary">
-                <Shield className="h-6 w-6 text-secondary" />
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-primary ">
+                <Shield className="h-10 w-10 text-secondary bg-neutral-200 p-2 rounded-xl " />
                 Check Your Email for Security Breaches
               </h2>
               
