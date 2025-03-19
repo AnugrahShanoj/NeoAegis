@@ -91,3 +91,8 @@ export const updateProfileAPI= async(reqBody,reqHeader)=>{
 export const getUserDetailsAPI= async(reqHeader)=>{
    return await commonAPI('get',`${serverUrl}/getUserDetails`,"",reqHeader)
 }
+
+// 19 Route for handling email breach check
+export const emailBreachAPI= async(emailAddress, reqHeader)=>{
+   return await commonAPI('get', `${serverUrl}/emailBreach?email=${emailAddress}`,"",reqHeader)
+}

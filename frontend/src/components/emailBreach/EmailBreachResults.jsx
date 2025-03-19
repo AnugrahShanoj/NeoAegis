@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle, ArrowRightCircle, Calendar, Globe, Shield, LockKeyhole, Info, ExternalLink } from "lucide-react";
 function EmailBreachResults({ results }) {
-    const { email, breachedSites, breachCount, checkedAt } = results;
+    const { email, breachedSites,breachedData, breachCount, checkedAt } = results;
     const isBreached = breachCount > 0;
 
     // Create binary code animation for breach visualization
@@ -106,16 +106,16 @@ function EmailBreachResults({ results }) {
                             </div>
                             <h5 className="font-medium text-primary flex items-center gap-2">
                               {site.name}
-                              <span className="text-sm font-normal text-neutral-500 hidden sm:inline">({site.domain})</span>
+                              {/* <span className="text-sm font-normal text-neutral-500 hidden sm:inline">({site.domain})</span> */}
                             </h5>
                           </div>
                           <p className="text-sm text-neutral-600 mt-2">{site.description}</p>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-neutral-500 whitespace-nowrap bg-neutral-50 px-3 py-1 rounded-full">
+                        <div className="flex items-center gap-2 text-sm text-neutral-800 whitespace-nowrap bg-neutral-200 px-3 py-1 rounded-full">
                           <Calendar className="h-3.5 w-3.5" />
-                          <span>Breach: {new Date(site.breachDate).toLocaleDateString()}</span>
+                          <span>Breach:{site.date? site.date:" Unknown"}</span>
                         </div>
-                      </div>
+                      </div>                  
                     </div>
                   </motion.div>
                 ))}

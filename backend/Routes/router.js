@@ -11,7 +11,7 @@ const jwtMiddlewares = require('../Middleware/jwtMiddleware')
 const multerMiddleware= require('../Middleware/multerMiddleware')
 const safetyCheckinController= require('../Controller/safetyCheckinController')
 const sosAlertController= require('../Controller/sosAlertController')
-
+const emailBreachController= require('../Controller/emailBreachController')
 // Create a router using express router
 const router=express.Router()
 
@@ -79,6 +79,9 @@ router.put('/editUserProfile',jwtMiddlewares,multerMiddleware.single('profilePic
 
 // 18 Route for handling Get User Details
 router.get('/getUserDetails',jwtMiddlewares,userController.getUserDetails)
+
+// 19 Route for handling api call for LeakCheck API
+router.get('/emailBreach',jwtMiddlewares,emailBreachController.emailBreachCheck)
 
 // Export the router    
 module.exports=router

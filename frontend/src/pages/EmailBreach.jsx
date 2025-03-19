@@ -8,11 +8,13 @@ import  EmailBreachSearch  from "@/components/emailBreach/EmailBreachSearch";
 import  EmailBreachResults  from "@/components/emailBreach/EmailBreachResults";
 import  EmailBreachTips  from "@/components/emailBreach/EmailBreachTips";
 import { toast } from "sonner";
+import { emailBreachAPI } from '../../Services/allAPI';
 function EmailBreach() {
     const [searchResults, setSearchResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showInfoAlert, setShowInfoAlert] = useState(true);
+  const [token, setToken]=useState('')
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
 
@@ -32,7 +34,10 @@ function EmailBreach() {
         duration: 5000,
       }
     );
-  }, []);
+
+    // Fetch token from session storage
+    setToken(sessionStorage.getItem('token'))
+  }, [token]);
 
   const handleCheckEmail = async (email) => {
     if (!email || !email.includes('@')) {
@@ -43,52 +48,22 @@ function EmailBreach() {
     setIsLoading(true);
     setError(null);
     
-    try {
-      // For demo purposes, we'll simulate an API call with a loading delay
-      // In production, you would call a real breach checking API like HaveIBeenPwned
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock results for demonstration with more details
-      const mockResults = email.includes('test') 
-        ? [
-            { 
-              name: "Adobe",
-              domain: "adobe.com", 
-              breachDate: "2013-10-04", 
-              description: "In October 2013, 153 million Adobe accounts were breached with names, email addresses, encrypted passwords, and password hints exposed."
-            },
-            { 
-              name: "Dropbox", 
-              domain: "dropbox.com", 
-              breachDate: "2012-07-01", 
-              description: "In mid-2012, Dropbox suffered a data breach which exposed the stored credentials of tens of millions of users. Names, emails, and encrypted passwords were compromised."
-            },
-            { 
-              name: "LinkedIn", 
-              domain: "linkedin.com", 
-              breachDate: "2012-05-05", 
-              description: "In May 2016, LinkedIn had 164 million email addresses and passwords exposed. The data was initially exfiltrated, then later sold on the dark web."
-            }
-          ] 
-        : [];
-      
-      setSearchResults({
-        email,
-        breachedSites: mockResults,
-        breachCount: mockResults.length,
-        checkedAt: new Date().toISOString()
-      });
-      
-      // Show relevant toast based on result
-      if (mockResults.length > 0) {
-        toast.error(`Your email was found in ${mockResults.length} data breaches`, {
-          description: "Check the details and take action to secure your accounts",
-          duration: 5000,
-        });
-      } else {
-        toast.success("Good news! Your email appears to be secure", {
-          description: "No breaches found for this email address",
-          duration: 5000,
+    // Token for API call
+    if(token){
+      const reqHeader={
+        'Content-Type':`multipart/form-data`,
+        'Authorization':`Bearer ${token}`
+      }
+      try {
+      // API Call for email breach check
+      const response= await emailBreachAPI(email, reqHeader)
+      console.log(response)
+      if(response.status=200){
+        setSearchResults({
+          email,
+          breachedSites: response.data.sources,
+          breachCount: response.data.found,
+          checkedAt: new Date().toISOString()
         });
       }
     } catch (err) {
@@ -100,6 +75,7 @@ function EmailBreach() {
     } finally {
       setIsLoading(false);
     }
+  }
   };
   return (
     <div className="min-h-screen flex bg-neutral-50">
