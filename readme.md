@@ -132,7 +132,7 @@ NeoAegis/
 │   └── neoAegis-architecture.png
 │
 └── README.md
-
+```
 
 ## 🛡️ Security Implementation
 
