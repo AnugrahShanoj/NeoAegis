@@ -22,6 +22,12 @@ Below is the high-level architecture diagram representing the complete flow of N
 
 ![NeoAegis Architecture Diagram](assets/NeoAegis_Architecture_Diagram.png)
 
+## 🗄️ Database Collection Relationship Diagram (MongoDB)
+
+The following diagram represents the MongoDB collection-level relationships implemented in NeoAegis using application-level referencing via `userId`.
+
+![NeoAegis MongoDB Collection Relationship Diagram](assets/NeoAegis_CRD.png)
+
 ## 🚀 Core Features
 
 ### 🔐 Secure Authentication
