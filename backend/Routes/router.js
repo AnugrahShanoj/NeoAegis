@@ -5,7 +5,7 @@ const passport=require('passport')
 // Import Controllers
 const userController=require('../Controller/userController')
 const paymentController=require('../Controller/paymentController')
-const smsController=require('../Controller/smsController')
+// const smsController=require('../Controller/smsController')
 const emergencyContactController=require('../Controller/emergencyContactController')
 const jwtMiddlewares = require('../Middleware/jwtMiddleware')
 const multerMiddleware= require('../Middleware/multerMiddleware')
@@ -38,7 +38,7 @@ router.post('/register',userController.registerAPI)
 
 
 // 5 Route for handling SMS Request
-router.post('/sms/request',jwtMiddlewares,smsController.smsAPI)
+// router.post('/sms/request',jwtMiddlewares,smsController.smsAPI)
 
 // 6 Route for handling Add Emergency Contact 
 router.post('/addEmergencyContact',jwtMiddlewares,emergencyContactController.addEmergencyContact)
@@ -82,6 +82,9 @@ router.get('/getUserDetails',jwtMiddlewares,userController.getUserDetails)
 
 // 19 Route for handling api call for LeakCheck API
 router.get('/emailBreach',jwtMiddlewares,emailBreachController.emailBreachCheck)
+
+// 20 Route for verifying SOS tracking token — NO auth, accessible by anyone
+router.get('/track/verify/:token', sosAlertController.verifyTrackingToken)
 
 // Export the router    
 module.exports=router

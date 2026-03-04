@@ -17,6 +17,7 @@ import EmergencyManagement from "./pages/admin/EmergencyManagement.jsx";
 import SafetyAlertMonitoring from "./pages/admin/SafetyAlertMonitoring.jsx";
 import Payment from "./pages/Payment.jsx";
 import EmailBreach from "./pages/EmailBreach.jsx";
+import TrackingPage from "./pages/TrackingPage.jsx";
 const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/checkins" element={<SafetyCheckins/>}/>
           <Route path="/alerts" element={<SOSAlerts/>}/>
           <Route path="/email-breach" element={<EmailBreach />} />
+          <Route path="/track/:token" element={<TrackingPage />} />
 
            {/* Admin Routes */}
            <Route path="/admin" element={<AdminLayout />}>

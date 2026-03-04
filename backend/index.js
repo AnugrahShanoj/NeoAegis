@@ -1,55 +1,72 @@
-//Import dotenv
-require('dotenv').config()
-//  Import passport configuration
-require('./Controller/passportConfig'); // Adjust the path to your passportConfig.js
+require('dotenv').config();
+require('./Controller/passportConfig');
+require("./Scheduler/safetyCheckinJob");
 
-// Import cron
-require("./Scheduler/safetyCheckinJob"); // ✅ Runs the cron job automatically
-
-
-// Import express
-const express=require('express')
-// Import cors
-const cors=require('cors')
-//Import DB Connection
-const DB=require('./DB/connection')
-// Import router
-const router=require('./Routes/router')
-// Import passport
+const express = require('express');
+const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
+const DB = require('./DB/connection');
+const router = require('./Routes/router');
 const passport = require('passport');
-// Import session
 const session = require('express-session');
+const sosAlertController = require('./Controller/sosAlertController');
 
-// Create an application
-const serverApp=express()
+const serverApp = express();
+const PORT = process.env.PORT || 3000;
 
-serverApp.use(
-    session({
-      secret: 'NeoAegis_2024', // Replace with a strong secret key
-      resave: false,
-      saveUninitialized: true,
-      cookie: { secure: false }, // Set to true if using HTTPS
-    })
-  );
+const httpServer = http.createServer(serverApp);
 
-// Middlewares
-serverApp.use(express.json())
-serverApp.use(cors())
-serverApp.use(router)
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:8081',
+    methods: ['GET', 'POST']
+  }
+});
+
+sosAlertController.setIO(io);
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  socket.on('join-sos-room', (userId) => {
+    socket.join(`sos-${userId}`);
+    console.log(`User ${userId} joined SOS room`);
+  });
+
+  socket.on('location-update', ({ userId, lat, lng }) => {
+    io.to(`sos-${userId}`).emit('user-location', {
+      lat,
+      lng,
+      timestamp: Date.now()
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
+});
+
+serverApp.use(session({
+  secret: process.env.SESSION_SECRET || 'NeoAegis_2024',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false },
+}));
+
+serverApp.use(express.json());
+serverApp.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:8081'
+}));
 serverApp.use(passport.initialize());
 serverApp.use(passport.session());
-serverApp.use('/Uploads',express.static('./Uploads'))
+serverApp.use(router);
+serverApp.use('/Uploads', express.static('./Uploads'));
 
-// Define PORT
-const PORT= 3000 || process.env.PORT
+serverApp.get('/', (req, res) => {
+  res.send("Welcome to NeoAegis Backend Server");
+});
 
-// Start the application
-serverApp.listen(PORT,()=>{
-    console.log("NeoAegis Server running on PORT "+PORT)
-})
-
-
-// Sending a welcome message 
-serverApp.get('/',(req,res)=>{
-    res.send("Welcome to NeoAegis Backend Server")
-})
+httpServer.listen(PORT, () => {
+  console.log("NeoAegis Server running on PORT " + PORT);
+});

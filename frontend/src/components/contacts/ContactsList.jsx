@@ -29,7 +29,7 @@ const ContactsList = ({ selectedContacts, setSelectedContacts }) => {
       const reqHeader={
         'Authorization':`Bearer ${token}`
       }
-      console.log(reqHeader)
+      // console.log(reqHeader)
       //API Call for emergency contacts
       try {
         const response=await getEmergencyContactAPI(reqHeader)

@@ -9,30 +9,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardSidebar from "../components/Dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
-import { smsAPI } from "../../Services/allAPI";
+// import { smsAPI } from "../../Services/allAPI";
 const EmergencyContacts = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState([]);
-  const handleTestAlert =async () => {
-    if (selectedContacts.length === 0) {
-      alert("Please select at least one contact");
-      return;
-    }
-    const token= sessionStorage.getItem('token')
-    if(token){
-      const reqHeader={
-        'Authorization':`Bearer ${token}`
-      }
-      const reqBody={
-        msg:"This is a Test Alert."
-      }
-      const response= await smsAPI(reqBody,reqHeader)
-      console.log(response)
-      if(response.status==200){
-        alert(`Test alert sent to ${selectedContacts.length} contacts`);
-      }
-    }
-  };
+  // const handleTestAlert =async () => {
+  //   if (selectedContacts.length === 0) {
+  //     alert("Please select at least one contact");
+  //     return;
+  //   }
+  //   const token= sessionStorage.getItem('token')
+  //   if(token){
+  //     const reqHeader={
+  //       'Authorization':`Bearer ${token}`
+  //     }
+  //     const reqBody={
+  //       msg:"This is a Test Alert."
+  //     }
+  //     const response= await smsAPI(reqBody,reqHeader)
+  //     console.log(response)
+  //     if(response.status==200){
+  //       alert(`Test alert sent to ${selectedContacts.length} contacts`);
+  //     }
+  //   }
+  // };
   return (
     <SidebarProvider>
         <div className="min-h-screen flex w-full">
@@ -77,7 +77,7 @@ const EmergencyContacts = () => {
               <Button
                 variant="secondary"
                 className="w-full"
-                onClick={handleTestAlert}
+                // onClick={handleTestAlert}
                 disabled={selectedContacts.length === 0}
               >
                 <Send className="w-4 h-4 mr-2" />

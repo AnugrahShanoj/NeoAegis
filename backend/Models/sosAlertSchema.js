@@ -13,8 +13,8 @@ const sosAlertSchema = new mongoose.Schema({
       type: Number,
       required: true,
     },
-    city:{
-        type:String,
+    city: {
+      type: String,
     }
   },
   timestamp: {
@@ -33,6 +33,14 @@ const sosAlertSchema = new mongoose.Schema({
     default: 'Pending',
     required: true,
   },
+  trackingToken: {
+    type: String,
+    default: null,
+  },
+  tokenExpiry: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -40,5 +48,4 @@ const sosAlertSchema = new mongoose.Schema({
 });
 
 const SOSAlert = mongoose.model('SOSAlert', sosAlertSchema);
-
 module.exports = SOSAlert;

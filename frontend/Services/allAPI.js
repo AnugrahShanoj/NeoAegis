@@ -42,9 +42,9 @@ export const editEmergencyContactAPI= async(contactId,reqBody,reqHeader)=>{
 
 
 // 9 API call for test alert to emergency contacts
-export const smsAPI=async(reqBody,reqHeader)=>{
-   return await commonAPI('post',`${serverUrl}/sms/request`,reqBody,reqHeader)
-}
+// export const smsAPI=async(reqBody,reqHeader)=>{
+//    return await commonAPI('post',`${serverUrl}/sms/request`,reqBody,reqHeader)
+// }
 
 // 10 API call for add a safety check-in
 export const addSafetyCheckinAPI=async(reqBody,reqHeader)=>{
