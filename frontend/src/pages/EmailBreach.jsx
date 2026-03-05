@@ -80,7 +80,7 @@ function EmailBreach() {
   return (
     <div className="min-h-screen flex bg-neutral-50">
       <DashboardSidebar />
-      <main className="flex-1 p-4 md:p-8 overflow-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-auto pt-14 md:pt-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

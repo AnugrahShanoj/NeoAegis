@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const SOSAlert = require('../Models/sosAlertSchema');
 const EmergencyContact = require('../Models/emergencyContactSchema');
-const { sendSOSEmail } = require('../Utils/emailService');
+const { sendSOSAlertEmail } = require('../Utils/emailService');
 
 let ioInstance = null;
 exports.setIO = (io) => { ioInstance = io; };
@@ -36,11 +36,27 @@ exports.createSOSAlert = async (req, res) => {
 
     const contacts = await EmergencyContact.find({ userId });
 
-    if (contacts.length > 0) {
-      sendSOSEmail(contacts, savedAlert, trackingUrl).catch(err =>
-        console.error('Email sending error:', err)
-      );
-    } else {
+if (contacts.length > 0) {
+  const emailPromises = contacts.map(contact =>
+    sendSOSAlertEmail({
+      contactEmail: contact.email,
+      contactName:  contact.fullname,
+      trackingUrl,
+      alertDetails: {
+        triggeredBy: 'A NeoAegis user',
+        city:        city || 'Unknown',
+        timestamp:   new Date().toLocaleString('en-IN', {
+                       dateStyle: 'medium',
+                       timeStyle: 'short',
+                     }),
+        message:     message || 'SOS Alert!',
+      },
+    })
+  );
+  Promise.all(emailPromises).catch(err =>
+    console.error('Email sending error:', err)
+  );
+} else {
       console.log('No emergency contacts found for user:', userId);
     }
 
@@ -90,6 +106,36 @@ exports.getSOSAlerts = async (req, res) => {
     res.status(200).json(sortedAlerts);
   } catch (error) {
     console.log("Server Error: ", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+exports.resolveSOSAlert = async (req, res) => {
+  try {
+    const { userId } = req.payload;
+
+    // Find the most recent Pending alert for this user and resolve it
+    const alert = await SOSAlert.findOneAndUpdate(
+      { userId, status: 'Pending' },
+      {
+        status: 'Resolved',
+        trackingToken: null,   // invalidate tracking link immediately
+        tokenExpiry: null,
+      },
+      { sort: { createdAt: -1 }, new: true } // most recent first, return updated doc
+    );
+
+    if (!alert) {
+      return res.status(404).json({ message: "No active SOS alert found." });
+    }
+
+    res.status(200).json({
+      message: "SOS Alert resolved successfully.",
+      alert,
+    });
+
+  } catch (error) {
+    console.error("Error resolving SOS Alert:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };

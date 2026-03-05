@@ -96,3 +96,13 @@ export const getUserDetailsAPI= async(reqHeader)=>{
 export const emailBreachAPI= async(emailAddress, reqHeader)=>{
    return await commonAPI('get', `${serverUrl}/emailBreach?email=${emailAddress}`,"",reqHeader)
 }
+
+// 20 API call for resolving active SOS alert
+export const resolveSOSAlertAPI = async (reqHeader) => {
+  return await commonAPI('patch', `${serverUrl}/resolveSOSAlert`, "", reqHeader)
+}
+
+// 21 Send test alert email to selected emergency contacts
+export const sendTestAlertAPI = async (reqBody, reqHeader) => {
+  return await commonAPI('post', `${serverUrl}/sendTestAlert`, reqBody, reqHeader);
+};

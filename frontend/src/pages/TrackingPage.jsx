@@ -22,7 +22,7 @@ const LiveMarker = ({ position, isLive }) => {
   return position ? (
     <Marker position={position}>
       <Popup>
-        <div style={{ textAlign: 'center', padding: '4px', fontWeight: '600' }}>
+        <div style={{ textAlign: 'center', padding: '4px', fontWeight: '600', fontSize: '13px' }}>
           {isLive ? '🟢 Live Location' : '🟠 Last Known Location'}
         </div>
       </Popup>
@@ -30,27 +30,37 @@ const LiveMarker = ({ position, isLive }) => {
   ) : null;
 };
 
-// ── Status definitions ──────────────────────────────────────────────────────
 const STATUS = {
-  VERIFYING:  { label: 'Verifying link...',           color: '#94a3b8', dot: '#94a3b8', pulse: false },
-  CONNECTING: { label: 'Connecting...',               color: '#fbbf24', dot: '#fbbf24', pulse: true  },
-  LIVE:       { label: 'Live',                        color: '#4ade80', dot: '#4ade80', pulse: true  },
-  LAST_KNOWN: { label: 'Showing last known location', color: '#fb923c', dot: '#fb923c', pulse: false },
-  ENDED:      { label: 'Tracking ended',              color: '#f87171', dot: '#f87171', pulse: false },
-  INVALID:    { label: 'Link invalid or expired',     color: '#f87171', dot: '#f87171', pulse: false },
+  VERIFYING:  { label: 'Verifying...',            color: '#94a3b8', dot: '#94a3b8', pulse: false },
+  CONNECTING: { label: 'Connecting...',           color: '#fbbf24', dot: '#fbbf24', pulse: true  },
+  LIVE:       { label: 'Live',                    color: '#4ade80', dot: '#4ade80', pulse: true  },
+  LAST_KNOWN: { label: 'Last known location',     color: '#fb923c', dot: '#fb923c', pulse: false },
+  ENDED:      { label: 'Tracking ended',          color: '#f87171', dot: '#f87171', pulse: false },
+  INVALID:    { label: 'Link invalid or expired', color: '#f87171', dot: '#f87171', pulse: false },
 };
 
 const TrackingPage = () => {
   const { token } = useParams();
-  const [position, setPosition]     = useState(null);
-  const [alertInfo, setAlertInfo]   = useState(null);
-  const [statusKey, setStatusKey]   = useState('VERIFYING');
+  const [position,    setPosition]    = useState(null);
+  const [alertInfo,   setAlertInfo]   = useState(null);
+  const [statusKey,   setStatusKey]   = useState('VERIFYING');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isPageValid, setIsPageValid] = useState(false);
 
-  // Timeout ref — transitions LIVE → LAST_KNOWN only
-  // (not ENDED — that only happens on socket disconnect)
+  // Track infobar height dynamically so map fills exactly the rest
+  const [infoBarHeight, setInfoBarHeight] = useState(0);
+  const infoBarRef = useRef(null);
   const staleTimeoutRef = useRef(null);
+
+  // Measure infobar height after render so map can fill remainder
+  useEffect(() => {
+    if (!infoBarRef.current) return;
+    const observer = new ResizeObserver(() => {
+      setInfoBarHeight(infoBarRef.current?.offsetHeight || 0);
+    });
+    observer.observe(infoBarRef.current);
+    return () => observer.disconnect();
+  }, [alertInfo]); // re-measure if alertInfo changes (mobile row added/removed)
 
   const clearStaleTimeout = () => {
     if (staleTimeoutRef.current) {
@@ -61,8 +71,6 @@ const TrackingPage = () => {
 
   const startStaleTimeout = () => {
     clearStaleTimeout();
-    // If no update arrives for 8 seconds → sender has gone still but is still connected
-    // Show LAST_KNOWN, not ENDED
     staleTimeoutRef.current = setTimeout(() => {
       setStatusKey(prev => prev === 'LIVE' ? 'LAST_KNOWN' : prev);
     }, 8000);
@@ -74,105 +82,83 @@ const TrackingPage = () => {
     fetch(`${serverUrl}/track/verify/${token}`)
       .then(res => res.json())
       .then(data => {
-        if (!data.userId) {
-          setStatusKey('INVALID');
-          return;
-        }
+        if (!data.userId) { setStatusKey('INVALID'); return; }
 
         setAlertInfo(data);
         setIsPageValid(true);
-
-        // Show last known position from DB immediately while socket connects
         setPosition([data.location.latitude, data.location.longitude]);
         setStatusKey('CONNECTING');
 
-        // Connect socket
         socket = io(serverUrl, {
-          reconnection: true,          // auto-reconnect on tab switch
+          reconnection: true,
           reconnectionAttempts: 10,
           reconnectionDelay: 2000,
         });
 
         socket.on('connect', () => {
-          console.log('Tracking socket connected');
           socket.emit('join-sos-room', data.userId);
-          // Stay CONNECTING until first live event arrives
-          // If no event in 8 seconds → LAST_KNOWN
           staleTimeoutRef.current = setTimeout(() => {
             setStatusKey(prev => prev === 'CONNECTING' ? 'LAST_KNOWN' : prev);
           }, 8000);
         });
 
         socket.on('user-location', ({ lat, lng }) => {
-          // New live position received
           setPosition([lat, lng]);
-          setLastUpdated(
-            new Date().toLocaleTimeString('en-IN', {
-              hour: '2-digit', minute: '2-digit', second: '2-digit'
-            })
-          );
+          setLastUpdated(new Date().toLocaleTimeString('en-IN', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+          }));
           setStatusKey('LIVE');
-          startStaleTimeout(); // reset 8s stale timer on every update
+          startStaleTimeout();
         });
 
-        socket.on('disconnect', (reason) => {
-          console.log('Tracking socket disconnected:', reason);
-          clearStaleTimeout();
-          // Only mark ENDED on actual disconnect — not on stale timeout
-          setStatusKey('ENDED');
-        });
-
-        socket.on('reconnect', () => {
-          console.log('Tracking socket reconnected');
+        socket.on('disconnect', () => { clearStaleTimeout(); setStatusKey('ENDED'); });
+        socket.on('reconnect',   () => {
           socket.emit('join-sos-room', data.userId);
           setStatusKey('CONNECTING');
-          // Give 8s for live events to resume
           staleTimeoutRef.current = setTimeout(() => {
             setStatusKey(prev => prev === 'CONNECTING' ? 'LAST_KNOWN' : prev);
           }, 8000);
         });
-
-        socket.on('connect_error', () => {
-          setStatusKey('LAST_KNOWN');
-        });
+        socket.on('connect_error', () => setStatusKey('LAST_KNOWN'));
       })
-      .catch(() => {
-        setStatusKey('INVALID');
-      });
+      .catch(() => setStatusKey('INVALID'));
 
-    // Handle tab visibility — when tab becomes visible again, rejoin room
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && socket?.connected && alertInfo?.userId) {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && socket?.connected && alertInfo?.userId)
         socket.emit('join-sos-room', alertInfo.userId);
-      }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       if (socket) socket.disconnect();
       clearStaleTimeout();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [token]);
 
   const status = STATUS[statusKey];
   const isLive = statusKey === 'LIVE';
 
-  // ── Invalid / expired link screen ────────────────────────────────────────
+  // Navbar is always 60px. Map height = 100dvh - 60px (navbar) - infoBarHeight
+  const NAVBAR_H = 60;
+  const mapHeight = `calc(100dvh - ${NAVBAR_H}px - ${infoBarHeight}px)`;
+
+  // ── Invalid screen ──────────────────────────────────────────────────────
   if (!isPageValid && statusKey !== 'VERIFYING' && statusKey !== 'CONNECTING') {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+        minHeight: '100dvh',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        padding: '24px',
       }}>
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <div style={{ fontSize: '72px', marginBottom: '20px' }}>🔒</div>
-          <h2 style={{ color: '#f1f5f9', fontSize: '22px', fontWeight: '700', margin: '0 0 12px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔒</div>
+          <h2 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '700', margin: '0 0 10px' }}>
             {status.label}
           </h2>
-          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
-            This link may have expired or the SOS alert has been resolved.
+          <p style={{ color: '#64748b', fontSize: '14px', margin: 0, lineHeight: 1.6 }}>
+            This link may have expired or the SOS alert has already been resolved.
           </p>
         </div>
       </div>
@@ -180,176 +166,252 @@ const TrackingPage = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#0f172a' }}>
+    <>
+      {/* ── Global styles ─────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes ping {
+          0%        { transform: scale(1);   opacity: 0.5; }
+          75%, 100% { transform: scale(2.5); opacity: 0;   }
+        }
 
-      {/* ── Navbar ─────────────────────────────────────────────────────────── */}
-      <nav style={{
-        background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 100%)',
-        borderBottom: '1px solid #334155',
-        padding: '0 24px',
-        height: '64px',
+        /* Mobile: hide center badge in navbar, show message row in infobar */
+        @media (max-width: 600px) {
+          .tracking-center-badge  { display: none !important; }
+          .tracking-mobile-msg    { display: block !important; }
+        }
+
+        /* Tablet */
+        @media (min-width: 601px) and (max-width: 900px) {
+          .tracking-center-badge { display: flex !important; }
+          .tracking-mobile-msg   { display: none !important; }
+        }
+
+        /* Desktop */
+        @media (min-width: 901px) {
+          .tracking-center-badge { display: flex !important; }
+          .tracking-mobile-msg   { display: none !important; }
+        }
+      `}</style>
+
+      <div style={{
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        zIndex: 1000,
-        position: 'relative',
+        flexDirection: 'column',
+        height: '100dvh',       /* exact viewport — no overflow, no gap */
+        background: '#0f172a',
+        overflow: 'hidden',
       }}>
 
-        {/* Left — Branding */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, #dc2626, #991b1b)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '18px', flexShrink: 0,
-            boxShadow: '0 0 16px rgba(220,38,38,0.4)'
-          }}>🛡️</div>
-          <div>
-            <div style={{ color: '#f1f5f9', fontSize: '15px', fontWeight: '800', lineHeight: 1.2, letterSpacing: '-0.3px' }}>
-              NeoAegis
-            </div>
-            <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '500', letterSpacing: '0.5px' }}>
-              LIVE SOS TRACKING
+        {/* ══════════════════════════════════════════
+            NAVBAR  (fixed 60px)
+        ══════════════════════════════════════════ */}
+        <nav style={{
+          height: `${NAVBAR_H}px`,
+          minHeight: `${NAVBAR_H}px`,
+          background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 100%)',
+          borderBottom: '1px solid #334155',
+          padding: '0 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+          zIndex: 1000,
+          gap: '8px',
+          flexShrink: 0,
+        }}>
+
+          {/* Left — Branding */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <div style={{
+              width: '34px', height: '34px', borderRadius: '9px', flexShrink: 0,
+              background: 'linear-gradient(135deg, #dc2626, #991b1b)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '16px', boxShadow: '0 0 14px rgba(220,38,38,0.4)',
+            }}>🛡️</div>
+            <div>
+              <div style={{ color: '#f1f5f9', fontSize: '14px', fontWeight: '800', lineHeight: 1.2, whiteSpace: 'nowrap' }}>
+                NeoAegis
+              </div>
+              <div style={{ color: '#64748b', fontSize: '10px', fontWeight: '600', letterSpacing: '0.8px', whiteSpace: 'nowrap' }}>
+                LIVE SOS TRACKING
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Center — Alert message */}
-        {alertInfo && (
-          <div style={{
-            position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-            textAlign: 'center', maxWidth: '280px', width: '100%',
-          }}>
-            <div style={{
-              background: 'rgba(220,38,38,0.15)',
-              border: '1px solid rgba(220,38,38,0.3)',
-              borderRadius: '8px', padding: '6px 14px',
-            }}>
-              <p style={{
-                color: '#fca5a5', fontSize: '12px', fontWeight: '600',
-                margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          {/* Center — Alert badge (tablet + desktop only) */}
+          {alertInfo && (
+            <div
+              className="tracking-center-badge"
+              style={{ flex: 1, justifyContent: 'center', padding: '0 8px', minWidth: 0, overflow: 'hidden' }}
+            >
+              {/* ✅ inline-block so box wraps message width, not full width */}
+              <div style={{
+                display: 'inline-block',
+                maxWidth: '100%',
+                background: 'rgba(220,38,38,0.15)',
+                border: '1px solid rgba(220,38,38,0.3)',
+                borderRadius: '8px', padding: '5px 12px',
               }}>
-                🚨 {alertInfo.message}
-              </p>
+                <p style={{
+                  color: '#fca5a5', fontSize: '12px', fontWeight: '600',
+                  margin: 0, whiteSpace: 'nowrap',
+                  overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>
+                  🚨 {alertInfo.message}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Right — Status indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <div style={{ position: 'relative', width: '10px', height: '10px', flexShrink: 0 }}>
-            <div style={{
-              width: '10px', height: '10px', borderRadius: '50%',
-              backgroundColor: status.dot, position: 'absolute',
-            }} />
-            {status.pulse && (
+          {/* Right — Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: '10px', height: '10px', flexShrink: 0 }}>
               <div style={{
                 width: '10px', height: '10px', borderRadius: '50%',
                 backgroundColor: status.dot, position: 'absolute',
-                animation: 'ping 1.2s ease-out infinite',
               }} />
-            )}
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ color: status.color, fontSize: '13px', fontWeight: '700' }}>
-              {status.label}
+              {status.pulse && (
+                <div style={{
+                  width: '10px', height: '10px', borderRadius: '50%',
+                  backgroundColor: status.dot, position: 'absolute',
+                  animation: 'ping 1.2s ease-out infinite',
+                }} />
+              )}
             </div>
-            {lastUpdated && (
-              <div style={{ color: '#475569', fontSize: '11px', marginTop: '1px' }}>
-                Last update: {lastUpdated}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ color: status.color, fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                {status.label}
               </div>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Info bar ───────────────────────────────────────────────────────── */}
-      <div style={{
-        background: '#1e293b',
-        borderBottom: '1px solid #334155',
-        padding: '10px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '24px',
-        flexShrink: 0,
-        flexWrap: 'wrap',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '13px' }}>📍</span>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>Location:</span>
-          <span style={{ color: '#f1f5f9', fontSize: '12px', fontWeight: '600' }}>
-            {alertInfo?.location?.city || 'Fetching...'}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '13px' }}>⚡</span>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>Status:</span>
-          <span style={{
-            fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '100px',
-            background: isLive ? 'rgba(74,222,128,0.15)' : 'rgba(251,146,60,0.15)',
-            color: isLive ? '#4ade80' : '#fb923c',
-            border: `1px solid ${isLive ? 'rgba(74,222,128,0.3)' : 'rgba(251,146,60,0.3)'}`,
-          }}>
-            {isLive ? 'Receiving live updates' : 'Last known position'}
-          </span>
-        </div>
-      </div>
-
-      {/* ── Map ────────────────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, position: 'relative' }}>
-
-        {/* Verifying overlay */}
-        {statusKey === 'VERIFYING' && (
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 999,
-            background: 'rgba(15,23,42,0.9)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backdropFilter: 'blur(4px)',
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🛰️</div>
-              <p style={{ color: '#94a3b8', fontSize: '16px', fontWeight: '600' }}>
-                Verifying tracking link...
-              </p>
+              {lastUpdated && (
+                <div style={{ color: '#475569', fontSize: '10px', marginTop: '1px', whiteSpace: 'nowrap' }}>
+                  {lastUpdated}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </nav>
 
-        {position ? (
-          <MapContainer
-            center={position}
-            zoom={17}
-            style={{ height: 'calc(100vh - 106px)', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap contributors'
-            />
-            <LiveMarker position={position} isLive={isLive} />
-          </MapContainer>
-        ) : (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: 'calc(100vh - 106px)',
-            background: 'linear-gradient(135deg, #0f172a, #1e293b)'
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📡</div>
-              <p style={{ color: '#64748b', fontSize: '15px' }}>{status.label}</p>
+        {/* ══════════════════════════════════════════
+            INFO BAR  (dynamic height — measured by ResizeObserver)
+        ══════════════════════════════════════════ */}
+        <div
+          ref={infoBarRef}
+          style={{
+            background: '#1e293b',
+            borderBottom: '1px solid #334155',
+            padding: '8px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            flexShrink: 0,
+          }}
+        >
+          {/* Location + status row */}
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ fontSize: '12px' }}>📍</span>
+              <span style={{ color: '#94a3b8', fontSize: '11px' }}>Location:</span>
+              <span style={{ color: '#f1f5f9', fontSize: '11px', fontWeight: '600' }}>
+                {alertInfo?.location?.city || 'Fetching...'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ fontSize: '12px' }}>⚡</span>
+              <span style={{ color: '#94a3b8', fontSize: '11px' }}>Status:</span>
+              <span style={{
+                fontSize: '10px', fontWeight: '700',
+                padding: '2px 8px', borderRadius: '100px',
+                background: isLive ? 'rgba(74,222,128,0.15)' : 'rgba(251,146,60,0.15)',
+                color: isLive ? '#4ade80' : '#fb923c',
+                border: `1px solid ${isLive ? 'rgba(74,222,128,0.3)' : 'rgba(251,146,60,0.3)'}`,
+                whiteSpace: 'nowrap',
+              }}>
+                {isLive ? 'Receiving live updates' : 'Last known position'}
+              </span>
             </div>
           </div>
-        )}
-      </div>
 
-      <style>{`
-        @keyframes ping {
-          0%       { transform: scale(1);   opacity: 0.5; }
-          75%, 100%{ transform: scale(2.5); opacity: 0;   }
-        }
-      `}</style>
-    </div>
+          {/* Mobile-only alert message row */}
+          {alertInfo && (
+            <div
+              className="tracking-mobile-msg"
+              style={{ display: 'none' }} /* shown via media query */
+            >
+              {/* ✅ inline-block so box fits message, not full row width */}
+              <div style={{
+                display: 'inline-block',
+                maxWidth: '100%',
+                background: 'rgba(220,38,38,0.1)',
+                border: '1px solid rgba(220,38,38,0.25)',
+                borderRadius: '6px',
+                padding: '5px 10px',
+              }}>
+                <p style={{
+                  color: '#fca5a5', fontSize: '11px', fontWeight: '600',
+                  margin: 0, lineHeight: 1.4,
+                  wordBreak: 'break-word',  /* long messages wrap instead of overflow */
+                }}>
+                  🚨 {alertInfo.message}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ══════════════════════════════════════════
+            MAP  — fills exactly what remains
+        ══════════════════════════════════════════ */}
+        <div style={{
+          height: mapHeight,        /* precise: 100dvh - navbar - infobar */
+          width: '100%',
+          position: 'relative',
+          flexShrink: 0,            /* don't let flex shrink it */
+        }}>
+
+          {/* Verifying overlay */}
+          {statusKey === 'VERIFYING' && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 999,
+              background: 'rgba(15,23,42,0.9)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
+            }}>
+              <div style={{ textAlign: 'center', padding: '24px' }}>
+                <div style={{ fontSize: '44px', marginBottom: '14px' }}>🛰️</div>
+                <p style={{ color: '#94a3b8', fontSize: '15px', fontWeight: '600', margin: 0 }}>
+                  Verifying tracking link...
+                </p>
+              </div>
+            </div>
+          )}
+
+          {position ? (
+            <MapContainer
+              center={position}
+              zoom={17}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; OpenStreetMap contributors'
+              />
+              <LiveMarker position={position} isLive={isLive} />
+            </MapContainer>
+          ) : (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: '100%',
+              background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+            }}>
+              <div style={{ textAlign: 'center', padding: '24px' }}>
+                <div style={{ fontSize: '44px', marginBottom: '14px' }}>📡</div>
+                <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>{status.label}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </>
   );
 };
 

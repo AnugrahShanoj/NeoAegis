@@ -40,6 +40,7 @@ router.post('/register',userController.registerAPI)
 // 5 Route for handling SMS Request
 // router.post('/sms/request',jwtMiddlewares,smsController.smsAPI)
 
+
 // 6 Route for handling Add Emergency Contact 
 router.post('/addEmergencyContact',jwtMiddlewares,emergencyContactController.addEmergencyContact)
 
@@ -85,6 +86,12 @@ router.get('/emailBreach',jwtMiddlewares,emailBreachController.emailBreachCheck)
 
 // 20 Route for verifying SOS tracking token — NO auth, accessible by anyone
 router.get('/track/verify/:token', sosAlertController.verifyTrackingToken)
+
+// 21 Route for resolving active SOS alert
+router.patch('/resolveSOSAlert', jwtMiddlewares, sosAlertController.resolveSOSAlert)
+
+// 22 Test alert email to selected contacts
+router.post('/sendTestAlert', jwtMiddlewares, emergencyContactController.sendTestAlert);
 
 // Export the router    
 module.exports=router
