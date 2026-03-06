@@ -9,7 +9,7 @@ const activityLogSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["checkin", "sos", "breach_scan", "contact_added", "contact_deleted", "profile_updated"],
+      enum: ["checkin", "sos", "breach_scan", "contact_added", "contact_deleted","contact_updated", "profile_updated"],
       required: true,
     },
     title: { type: String, required: true },

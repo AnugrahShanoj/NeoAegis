@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -23,271 +22,242 @@ import {
 import { Badge } from "@/components/ui/badge";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
-import { addSafetyCheckinAPI,  checkNowAPI,  deleteSafetyCheckinAPI,  getSafetyCheckins } from "../../Services/allAPI";
+import { addSafetyCheckinAPI, checkNowAPI, deleteSafetyCheckinAPI, getSafetyCheckins } from "../../Services/allAPI";
 import EditSafetyCheckin from "../components/EditSafetyCheckin";
 
 const SafetyCheckins = () => {
-  const [isModalOpen, setIsModalOpen]=useState(false)
-  const [checkins, setCheckins] = useState([]);
-  const [editCheckin, setEditCheckin]=useState(null)
-  const [newCheckin, setNewCheckin] = useState({
-    time: "",
-    note: "",
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [checkins,    setCheckins]    = useState([]);
+  const [editCheckin, setEditCheckin] = useState(null);
+  const [newCheckin,  setNewCheckin]  = useState({ time: "", note: "" });
 
-  const [token,setToken]=useState("")
+  // ✅ Read token directly from sessionStorage — no token state needed
+  const getReqHeader = () => {
+    const token = sessionStorage.getItem("token");
+    return token ? { "Authorization": "Bearer " + token } : null;
+  };
 
-  const handleAddCheckin = async() => {
+  const handleGetCheckins = async () => {
+    const reqHeader = getReqHeader();
+    if (!reqHeader) return;
+    try {
+      const response = await getSafetyCheckins(reqHeader);
+      if (response.status === 200) {
+        const formatted = response.data.map((checkin) => ({
+          ...checkin,
+          formattedTime: format(new Date(checkin.checkInTime), "HH:mm"),
+          formattedDate: format(new Date(checkin.checkInTime), "MMM d, yyyy"),
+        }));
+        setCheckins(formatted);
+      } else {
+        toast.error("Failed to get Safety Check-ins");
+      }
+    } catch (error) {
+      console.error("Error getting check-ins:", error);
+    }
+  };
+
+  const handleAddCheckin = async () => {
     if (!newCheckin.time) {
       toast.error("Please select a time for the check-in");
       return;
     }
-
-    if(token){
-      const reqHeader={
-        "Authorization":`Bearer ${token}`
+    const reqHeader = getReqHeader();
+    if (!reqHeader) return;
+    const reqBody = { time: newCheckin.time, note: newCheckin.note };
+    try {
+      const response = await addSafetyCheckinAPI(reqBody, reqHeader);
+      if (response.status === 200) {
+        toast.success("Safety Check-in Added Successfully");
+        setNewCheckin({ time: "", note: "" });
+        setIsModalOpen(false);
+        handleGetCheckins(); // ✅ refetch immediately after add
+      } else {
+        toast.error("Failed to add Safety Check-in");
       }
-      const reqBody={
-        "time":newCheckin.time,
-        "note":newCheckin.note
-      }
-
-      try {
-        const response= await addSafetyCheckinAPI(reqBody,reqHeader)
-        console.log(response)
-        if(response.status==200){
-          alert("Safety Check-in Added Successfully.")
-          setNewCheckin({ time: "", note: "" });
-          setIsModalOpen(false)
-        }
-        else{
-          alert("Failed to add Safety Check-in")
-        }
-      } catch (error) {
-        console.log("Error while adding safety checkin: ", error)
-      }
+    } catch (error) {
+      console.error("Error adding check-in:", error);
+      toast.error("Something went wrong. Please try again.");
     }
-
   };
 
-  const handleGetCheckins=async()=>{
-    if(token){
-      const reqHeader={
-        "Authorization":`Bearer ${token}`
+  const handleCheckIn = async (checkinId) => {
+    const reqHeader = getReqHeader();
+    if (!reqHeader) return;
+    try {
+      const response = await checkNowAPI(checkinId, reqHeader);
+      if (response.status === 200) {
+        toast.success("Check-in Successful");
+        handleGetCheckins();
+      } else {
+        toast.error("Failed to Check-in");
       }
-      try {
-        const response= await getSafetyCheckins(reqHeader)
-      console.log(response)
-      if(response.status==200){
-        const formattedCheckins = response.data.map((checkin) => ({
-          ...checkin,
-          formattedTime: format(new Date(checkin.checkInTime), "HH:mm"), // Format the time
-          formattedDate: format(new Date(checkin.checkInTime), "MMM d, yyyy"), // Format the date
-        }));
-        setCheckins(formattedCheckins); // Update the state with formatted data
-      }
-      else{
-        alert("Failed to get Safety Checkins")
-      }
-      } catch (error) {
-        console.log("Error occured while getting checkins: ",error)
-      }
+    } catch (error) {
+      console.error("Error during check-in:", error);
+      toast.error("Something went wrong. Please try again.");
     }
-  }
+  };
 
+  const handleDeleteCheckin = async (checkinId) => {
+    const reqHeader = getReqHeader();
+    if (!reqHeader) return;
+    try {
+      const response = await deleteSafetyCheckinAPI(checkinId, reqHeader);
+      if (response.status === 200) {
+        toast.success("Check-in Deleted");
+        handleGetCheckins();
+      } else {
+        toast.error("Failed to Delete Check-in");
+      }
+    } catch (error) {
+      console.error("Error deleting check-in:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
 
-  // Handle Check Now Button
   const canCheckIn = (checkInTime) => {
-    const now = new Date();
+    const now                = new Date();
     const checkInWindowStart = new Date(checkInTime);
+    const checkInWindowEnd   = new Date(checkInTime);
     checkInWindowStart.setMinutes(checkInWindowStart.getMinutes() - 15);
-    const checkInWindowEnd = new Date(checkInTime);
     checkInWindowEnd.setMinutes(checkInWindowEnd.getMinutes() + 15);
-  
     return now >= checkInWindowStart && now <= checkInWindowEnd;
-  };
-
-  const handleCheckIn=async(checkinId)=>{
-    if(token){
-      const reqHeader={
-        "Authorization":`Bearer ${token}`
-      }
-      try {
-        const response= await checkNowAPI(checkinId, reqHeader)
-        console.log(response)
-        if(response.status==200){
-          alert("Checkin Successful")
-          handleGetCheckins()
-        }
-        else{
-          alert("Failed to Checkin")
-        }
-      } catch (error) {
-        console.log("Error while checking now.", error)
-      }
-  }
-}
-
-  const handleDeleteCheckin = async(checkinId) => {
-    if(token){
-      const reqHeader = {
-        "Authorization": `Bearer ${token}`
-      }
-      try {
-        const response= await deleteSafetyCheckinAPI(checkinId,reqHeader)
-        console.log(response)
-        if(response.status==200){
-          alert("Checkin Deleted")
-          handleGetCheckins()
-        }
-        else{
-          alert("Failed to Delete Checkin")
-        }
-      } catch (error) {
-        console.log("Error while delete a safety checkin: ",error)
-      }
-    }
   };
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-500";
-      case "pending":
-        return "bg-yellow-500";
-      case "missed":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
+      case "completed": return "bg-green-500";
+      case "pending":   return "bg-yellow-500";
+      case "missed":    return "bg-red-500";
+      default:          return "bg-gray-500";
     }
   };
 
-  useEffect(()=>{
-    setToken(sessionStorage.getItem("token"))
-    handleGetCheckins()
-  },[token])
+  // ✅ Runs once on mount — no infinite loop
+  useEffect(() => {
+    handleGetCheckins();
+  }, []);
 
   return (
-    <div className="flex h-screen bg-neutral-300/40 ">
+    <div className="flex h-screen bg-neutral-300/40">
       <DashboardSidebar />
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-4 py-8">
           <LayoutWrapper>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Safety Check-ins</h1>
-              <p className="text-gray-600">
-                Schedule regular check-ins to ensure your safety and notify your emergency
-                contacts if a check-in is missed.
-              </p>
-            </div>
-
-            <div className="grid gap-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">Scheduled Check-ins</h2>
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2" onClick={()=>setIsModalOpen(true)}>
-                      <Plus className="h-4 w-4" />
-                      Add Check-in
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Schedule New Check-in</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <label htmlFor="time">Time</label>
-                        <Select
-                          value={newCheckin.time}
-                          onValueChange={(value) =>
-                            setNewCheckin({ ...newCheckin, time: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent className='bg-white'>
-                            {Array.from({ length: 24 }, (_, i) => {
-                              const hour = i.toString().padStart(2, "0");
-                              return (
-                                <SelectItem key={hour} value={`${hour}:00`}>
-                                  {`${hour}:00`}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <label htmlFor="note">Note (Optional)</label>
-                        <Textarea
-                          id="note"
-                          value={newCheckin.note}
-                          onChange={(e) =>
-                            setNewCheckin({ ...newCheckin, note: e.target.value })
-                          }
-                          placeholder="Add a note for this check-in"
-                        />
-                      </div>
-                      <Button onClick={handleAddCheckin}>Schedule Check-in</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Safety Check-ins</h1>
+                <p className="text-gray-600">
+                  Schedule regular check-ins to ensure your safety and notify your emergency
+                  contacts if a check-in is missed.
+                </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {checkins.map((checkin) => (
-                  <motion.div
-                    key={checkin._id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="bg-white rounded-lg shadow-sm p-6 space-y-4"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-lg">{checkin.formattedTime}</h3>
-                        <p className="text-sm text-gray-500">
-                          {checkin.formattedDate}
-                        </p>
+              <div className="grid gap-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-gray-800">Scheduled Check-ins</h2>
+                  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2" onClick={() => setIsModalOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                        Add Check-in
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Schedule New Check-in</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <label htmlFor="time">Time</label>
+                          <Select
+                            value={newCheckin.time}
+                            onValueChange={(value) => setNewCheckin({ ...newCheckin, time: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select time" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white">
+                              {Array.from({ length: 24 }, (_, i) => {
+                                const hour = i.toString().padStart(2, "0");
+                                return (
+                                  <SelectItem key={hour} value={hour + ":00"}>
+                                    {hour + ":00"}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <label htmlFor="note">Note (Optional)</label>
+                          <Textarea
+                            id="note"
+                            value={newCheckin.note}
+                            onChange={(e) => setNewCheckin({ ...newCheckin, note: e.target.value })}
+                            placeholder="Add a note for this check-in"
+                          />
+                        </div>
+                        <Button onClick={handleAddCheckin}>Schedule Check-in</Button>
                       </div>
-                      <Badge
-                        className={`${getStatusColor(
-                          checkin.checkInStatus
-                        )} capitalize`}
-                      >
-                        {checkin.checkInStatus}
-                      </Badge>
-                    </div>
-                    
-                      <p className="text-sm text-gray-600">{checkin.checkInNote?checkin.checkInNote:"No Message"}</p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setEditCheckin(checkin)}
-                      >
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-red-600 hover:text-red-700"
-                        onClick={() => handleDeleteCheckin(checkin._id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
-                    </div>
-                    {canCheckIn(checkin.checkInTime) && checkin.checkInStatus === "Pending" && (
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {checkins.length === 0 && (
+                    <p className="text-sm text-gray-500 col-span-3 text-center py-8">
+                      No check-ins scheduled yet. Add one to get started.
+                    </p>
+                  )}
+                  {checkins.map((checkin) => (
+                    <motion.div
+                      key={checkin._id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-white rounded-lg shadow-sm p-6 space-y-4"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-lg">{checkin.formattedTime}</h3>
+                          <p className="text-sm text-gray-500">{checkin.formattedDate}</p>
+                        </div>
+                        <Badge className={getStatusColor(checkin.checkInStatus) + " capitalize"}>
+                          {checkin.checkInStatus}
+                        </Badge>
+                      </div>
+
+                      <p className="text-sm text-gray-600">
+                        {checkin.checkInNote ? checkin.checkInNote : "No Message"}
+                      </p>
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setEditCheckin(checkin)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteCheckin(checkin._id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+
+                      {canCheckIn(checkin.checkInTime) && checkin.checkInStatus === "Pending" && (
                         <Button
                           variant="default"
                           size="sm"
@@ -297,39 +267,30 @@ const SafetyCheckins = () => {
                           Check-In Now
                         </Button>
                       )}
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
           </LayoutWrapper>
         </div>
       </div>
 
       <EditSafetyCheckin
-  checkin={editCheckin} // Pass the contact to be edited
-  open={!!editCheckin} // Control modal visibility
-  onOpenChange={(open) => {
-    if (!open) setEditCheckin(null); // Close modal and reset state
-  }}
-  onSave={(updatedCheckin) => {
-    if(!updatedCheckin || !updatedCheckin._id){
-      console.error("Updated checkin is missing _id");
-      return;
-    }
-    // Update the contacts state in real-time
-    setCheckins((prevCheckin) =>
-      prevCheckin.map((checkin) =>
-        checkin._id === updatedCheckin._id ? updatedCheckin : checkin
-      )
-    );
-    // Close the modal after saving changes
-    setEditCheckin(null);
-
-    // Optional: Show a success toast
-    // toast.success("Contact updated successfully!");
-  }}
-/>
+        checkin={editCheckin}
+        open={!!editCheckin}
+        onOpenChange={(open) => { if (!open) setEditCheckin(null); }}
+        onSave={(updatedCheckin) => {
+          if (!updatedCheckin || !updatedCheckin._id) {
+            console.error("Updated checkin is missing _id");
+            return;
+          }
+          setCheckins((prev) =>
+            prev.map((c) => c._id === updatedCheckin._id ? updatedCheckin : c)
+          );
+          setEditCheckin(null);
+        }}
+      />
     </div>
   );
 };

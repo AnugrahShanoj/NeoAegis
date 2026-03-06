@@ -135,7 +135,12 @@ exports.resolveSOSAlert = async (req, res) => {
     if (!alert) {
       return res.status(404).json({ message: "No active SOS alert found." });
     }
-
+    await logActivity({
+  userId,
+  type: "sos",
+  title: "SOS Alert Resolved",
+  description: "SOS alert resolved — " + (alert.message || "Emergency alert"),
+});
     res.status(200).json({
       message: "SOS Alert resolved successfully.",
       alert,

@@ -1,139 +1,177 @@
-const SafetyCheckin= require('../Models/safetyCheckinsSchema')
-const logActivity = require("../Utils/activityLogger");
+const SafetyCheckin = require('../Models/safetyCheckinsSchema');
+const logActivity   = require("../Utils/activityLogger");
 
-// Logic for adding a new safety check-in
-exports.addSafetyCheckin= async(req,res)=>{
-    console.log("Inside AddSafetyCheckin");
-    try {
-        const {time, note}= req.body
-        const {userId}= req.payload
+// 1 — Add safety check-in
+exports.addSafetyCheckin = async (req, res) => {
+  try {
+    const { time, note } = req.body;
+    const { userId }     = req.payload;
 
-        // Validate time format (HH:00) using regex
-    const timeRegex = /^([01]\d|2[0-3]):00$/; // Matches 00:00 to 23:00 where minutes are always "00"
+    const timeRegex = /^([01]\d|2[0-3]):00$/;
     if (!timeRegex.test(time)) {
       return res.status(401).json({ message: "Invalid time format. Use HH:00 format." });
     }
 
+    const hours       = parseInt(time.split(':')[0], 10);
+    const now         = new Date();
+    const checkInTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, 0);
 
-    // Convert time to Date object
-    const hours = parseInt(time.split(':')[0], 10); // Extract hours from "HH:00"
-    console.log("Extracted Hour: ",hours)
-    const now = new Date();
-    const checkInTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, 0); // Minutes are always 0
-
-    // Create the new safety check-in
     const newCheckin = new SafetyCheckin({
       checkInTime,
-      checkInNote: note || "", // Note is optional
+      checkInNote: note || "",
       userId,
     });
 
-    // Save the check-in to the database
     const savedCheckin = await newCheckin.save();
 
-await logActivity({
-  userId,
-  type: "checkin",
-  title: "Safety Check-in Completed",
-  description: `Check-in completed at scheduled time`,
-});
+    await logActivity({
+      userId,
+      type:        "checkin",
+      title:       "Safety Check-in Scheduled",
+      description: "Check-in scheduled at " + time,
+    });
 
-    // Send back the saved details as a response
     return res.status(200).json({
       message: "Safety check-in added successfully.",
       checkin: savedCheckin,
     });
-    } catch (error) {
-        console.error("Error adding safety check-in:", error);
+
+  } catch (error) {
+    console.error("Error adding safety check-in:", error);
     res.status(500).json({ message: "Server error occurred while adding safety check-in." });
+  }
+};
 
-    }
-}
-
-// Logic for getting the all safety check-ins
-exports.getSafetyCheckins= async(req,res)=>{
-    const {userId}= req.payload
-    try {
-        const allSafetyCheckins= await SafetyCheckin.find({userId})
-        res.status(200).json(allSafetyCheckins)
-    } catch (error) {
-        console.log("Server Error while getting safety checkins: ",error)
-        res.status(500).json({message: "Server error occurred while getting safety check-in."})
-    }
-}
-
-
-
-// Logic for edit a safety checkin
-exports.editSafetyCheckin=async(req,res)=>{
-  console.log("Inside Edit Safety Checkin")
-  const {checkinId}= req.params
-  console.log('Checkin Id :',checkinId)
-  const {time,note}= req.body
-  const {userId}=req.payload
+// 2 — Get all check-ins for user
+exports.getSafetyCheckins = async (req, res) => {
+  const { userId } = req.payload;
   try {
-    console.log("Inside try of Edit Safety Checkin")
-    // Validate time format (HH:00) using regex
-    const timeRegex = /^([01]\d|2[0-3]):00$/; // Matches 00:00 to 23:00 where minutes are always "00"
+    const allCheckins = await SafetyCheckin.find({ userId });
+    res.status(200).json(allCheckins);
+  } catch (error) {
+    console.error("Error getting safety check-ins:", error);
+    res.status(500).json({ message: "Server error occurred while getting safety check-in." });
+  }
+};
+
+// 3 — Edit a check-in
+exports.editSafetyCheckin = async (req, res) => {
+  const { checkinId }  = req.params;
+  const { userId }     = req.payload;
+  const { time, note } = req.body;
+
+  try {
+    const timeRegex = /^([01]\d|2[0-3]):00$/;
     if (!timeRegex.test(time)) {
       return res.status(401).json({ message: "Invalid time format. Use HH:00 format." });
     }
-    // Convert time to Date object
-    const hours = parseInt(time.split(':')[0], 10); // Extract hours from "HH:00"
-    console.log("Extracted Hour: ",hours)
-    const now = new Date();
-    const checkInTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, 0); // Minutes are always 0
 
-    const updatedCheckin= await SafetyCheckin.findByIdAndUpdate({_id:checkinId},{
-      checkInTime:checkInTime,
-      checkInNote:note || ""
-    },
-    {new:true})
-    res.status(200).json({updatedCheckin:updatedCheckin})
+    const hours       = parseInt(time.split(':')[0], 10);
+    const now         = new Date();
+    const checkInTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, 0);
+
+    // ✅ ownership check — only update if checkin belongs to this user
+    const updatedCheckin = await SafetyCheckin.findOneAndUpdate(
+      { _id: checkinId, userId: userId },
+      { checkInTime, checkInNote: note || "" },
+      { new: true }
+    );
+
+    if (!updatedCheckin) {
+      return res.status(404).json({ message: "Check-in not found or access denied." });
+    }
+
+    await logActivity({
+      userId,
+      type:        "checkin",
+      title:       "Safety Check-in Rescheduled",
+      description: "Check-in rescheduled to " + time,
+    });
+
+    res.status(200).json({ updatedCheckin });
+
   } catch (error) {
-    console.log("Error while editting the safety checkin: ",error)
-    res.status(500).json({message:error})
+    console.error("Error editing safety check-in:", error);
+    res.status(500).json({ message: "Server error while editing check-in." });
   }
-}
+};
 
+// 4 — Check now (complete a check-in)
+exports.checkNow = async (req, res) => {
+  const { checkinId } = req.params;
+  const { userId }    = req.payload; // ✅ now correctly extracted
 
-// Logic for check now 
-exports.checkNow=async(req,res)=>{
   try {
-    console.log("Inside Check Now Function")
-    const {checkinId}=req.params
-    const checkin = await SafetyCheckin.findById(checkinId);
+    // ✅ ownership check
+    const checkin = await SafetyCheckin.findOne({ _id: checkinId, userId });
 
-    // Check if check-in is within valid time range
-    const now = new Date();
+    if (!checkin) {
+      return res.status(404).json({ message: "Check-in not found or access denied." });
+    }
+
+    const now                = new Date();
     const checkInWindowStart = new Date(checkin.checkInTime);
-    checkInWindowStart.setMinutes(checkInWindowStart.getMinutes() - 15); // Allow 15 minutes before
-    const checkInWindowEnd = new Date(checkin.checkInTime);
-    checkInWindowEnd.setMinutes(checkInWindowEnd.getMinutes() + 15); // Allow 15 minutes after
+    const checkInWindowEnd   = new Date(checkin.checkInTime);
+    checkInWindowStart.setMinutes(checkInWindowStart.getMinutes() - 15);
+    checkInWindowEnd.setMinutes(checkInWindowEnd.getMinutes() + 15);
 
     if (now >= checkInWindowStart && now <= checkInWindowEnd) {
-        checkin.checkInStatus = "Completed";
-        await checkin.save();
-        return res.status(200).json({ message: "Check-In marked as Completed", checkin });
+      checkin.checkInStatus = "Completed";
+      await checkin.save();
+
+      // ✅ time now correctly derived from the saved checkin
+      const completedHour = checkin.checkInTime.getHours();
+      const timeLabel     = String(completedHour).padStart(2, "0") + ":00";
+
+      await logActivity({
+        userId,
+        type:        "checkin",
+        title:       "Safety Check-in Completed",
+        description: "Check-in completed at " + timeLabel,
+      });
+
+      return res.status(200).json({ message: "Check-In marked as Completed", checkin });
     }
 
     return res.status(400).json({ message: "Not within the check-in window" });
+
   } catch (error) {
-      console.error("Error during check-in:", error);
-        res.status(500).json({ message: "Server Error" });
+    console.error("Error during check-in:", error);
+    res.status(500).json({ message: "Server Error" });
   }
-}
+};
 
+// 5 — Delete a check-in
+exports.deleteSafetyCheckin = async (req, res) => {
+  const { checkinId } = req.params;
+  const { userId }    = req.payload; // ✅ now correctly extracted
 
-// Logic for delete a safety checkin
-exports.deleteSafetyCheckin=async(req,res)=>{
-  const {checkinId}= req.params
   try {
-    console.log("Inside try of deleteSafetyCheckin")
-    const response= await SafetyCheckin.findByIdAndDelete({_id:checkinId},{new:true})
-    res.status(200).json(response)
+    // ✅ ownership check
+    const deleted = await SafetyCheckin.findOneAndDelete({
+      _id:    checkinId,
+      userId: userId,
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Check-in not found or access denied." });
+    }
+
+    // ✅ time correctly derived from the deleted document
+    const deletedHour = deleted.checkInTime.getHours();
+    const timeLabel   = String(deletedHour).padStart(2, "0") + ":00";
+
+    await logActivity({
+      userId,
+      type:        "checkin",
+      title:       "Safety Check-in Deleted",
+      description: "Check-in at " + timeLabel + " was deleted",
+    });
+
+    res.status(200).json(deleted);
+
   } catch (error) {
-    console.log("Error while deleting safety checkin: ",error)
-    res.status(500).json({message:"Server Error"})
+    console.error("Error deleting safety check-in:", error);
+    res.status(500).json({ message: "Server Error" });
   }
-}
+};

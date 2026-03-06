@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   AlertTriangle, CheckCircle, ShieldAlert,
-  UserPlus, UserMinus, User, Bell,
+  UserPlus, UserMinus, User,UserCheck, Bell,
   ChevronLeft, ChevronRight, RefreshCw, Filter
 } from "lucide-react";
 
@@ -16,6 +16,7 @@ const TYPE_CONFIG = {
   breach_scan:     { label: "Email Breach Scan",  iconBg: "bg-purple-50",  dot: "bg-purple-500", lineColor: "#7c3aed" },
   contact_added:   { label: "Contact Added",      iconBg: "bg-blue-50",    dot: "bg-blue-500",   lineColor: "#2563eb" },
   contact_deleted: { label: "Contact Removed",    iconBg: "bg-orange-50",  dot: "bg-orange-500", lineColor: "#ea580c" },
+  contact_updated: { label: "Contact Updated", iconBg: "bg-cyan-50", dot: "bg-cyan-500", lineColor: "#0891b2" },
   profile_updated: { label: "Profile Updated",    iconBg: "bg-neutral-100",dot: "bg-neutral-400",lineColor: "#9ca3af" },
 };
 
@@ -29,6 +30,7 @@ function getIconNode(type) {
   if (type === "breach_scan")     return <ShieldAlert   className="w-4 h-4 text-purple-500" />;
   if (type === "contact_added")   return <UserPlus      className="w-4 h-4 text-blue-500" />;
   if (type === "contact_deleted") return <UserMinus     className="w-4 h-4 text-orange-500" />;
+  if (type === "contact_updated") return <UserCheck className="w-4 h-4 text-cyan-500" />;
   return                                 <User          className="w-4 h-4 text-neutral-400" />;
 }
 
