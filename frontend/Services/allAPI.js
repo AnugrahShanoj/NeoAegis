@@ -106,3 +106,8 @@ export const resolveSOSAlertAPI = async (reqHeader) => {
 export const sendTestAlertAPI = async (reqBody, reqHeader) => {
   return await commonAPI('post', `${serverUrl}/sendTestAlert`, reqBody, reqHeader);
 };
+
+// 22 API call for fetching user activity logs
+export const getActivityLogsAPI = async (reqHeader) => {
+  return await commonAPI("get", `${serverUrl}/activity-logs`, null, reqHeader);
+};

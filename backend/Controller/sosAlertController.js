@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const SOSAlert = require('../Models/sosAlertSchema');
 const EmergencyContact = require('../Models/emergencyContactSchema');
 const { sendSOSAlertEmail } = require('../Utils/emailService');
+const logActivity = require("../Utils/activityLogger");
 
 let ioInstance = null;
 exports.setIO = (io) => { ioInstance = io; };
@@ -60,6 +61,12 @@ if (contacts.length > 0) {
       console.log('No emergency contacts found for user:', userId);
     }
 
+await logActivity({
+  userId,
+  type: "sos",
+  title: "SOS Alert Triggered",
+  description: message || "Emergency SOS alert was triggered",
+});
     res.status(200).json({
       message: "SOS Alert created successfully.",
       alert: savedAlert,

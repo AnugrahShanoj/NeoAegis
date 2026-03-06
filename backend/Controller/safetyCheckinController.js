@@ -1,4 +1,5 @@
 const SafetyCheckin= require('../Models/safetyCheckinsSchema')
+const logActivity = require("../Utils/activityLogger");
 
 // Logic for adding a new safety check-in
 exports.addSafetyCheckin= async(req,res)=>{
@@ -29,6 +30,13 @@ exports.addSafetyCheckin= async(req,res)=>{
 
     // Save the check-in to the database
     const savedCheckin = await newCheckin.save();
+
+await logActivity({
+  userId,
+  type: "checkin",
+  title: "Safety Check-in Completed",
+  description: `Check-in completed at scheduled time`,
+});
 
     // Send back the saved details as a response
     return res.status(200).json({

@@ -12,6 +12,8 @@ const multerMiddleware= require('../Middleware/multerMiddleware')
 const safetyCheckinController= require('../Controller/safetyCheckinController')
 const sosAlertController= require('../Controller/sosAlertController')
 const emailBreachController= require('../Controller/emailBreachController')
+const activityLogController = require("../Controller/activityLogController");
+
 // Create a router using express router
 const router=express.Router()
 
@@ -93,5 +95,10 @@ router.patch('/resolveSOSAlert', jwtMiddlewares, sosAlertController.resolveSOSAl
 // 22 Test alert email to selected contacts
 router.post('/sendTestAlert', jwtMiddlewares, emergencyContactController.sendTestAlert);
 
+// 23 Route for fetching user activity logs
+router.get("/activity-logs", jwtMiddlewares, activityLogController.getActivityLogs);
+
 // Export the router    
 module.exports=router
+
+

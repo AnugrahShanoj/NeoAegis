@@ -1,5 +1,6 @@
 // Import user model
 const users=require('../Models/userSchema')
+const logActivity = require("../Utils/activityLogger");
 const bcrypt=require('bcrypt')
 const jwt=require('jsonwebtoken')
 
@@ -136,6 +137,12 @@ exports.googleAuthCallback = async (req, res) => {
           );
   
           await User.save(); // Ensure changes are saved properly
+await logActivity({
+  userId,
+  type: "profile_updated",
+  title: "Profile Updated",
+  description: "Personal information was updated",
+});
   
           res.status(200).json({
               message: "User Profile Updated Successfully",

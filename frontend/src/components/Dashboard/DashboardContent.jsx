@@ -1,125 +1,158 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import WelcomeHeader from "./WelcomeHeader";
 import QuickStats from "./QuickStats";
-import RecentActivity from "./RecentActivity";
-import { motion } from "framer-motion";
-import { BellRing, Search } from "lucide-react";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Button } from "@/components/ui/button";
+import SafetyReadiness from "./SafetyReadiness";
+import CheckinStreakWidget from "./CheckinStreakWidget";
 import LayoutWrapper from "../LayoutWrapper";
-import { Link } from "react-router-dom";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  CommandDialog, CommandEmpty, CommandGroup,
+  CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+// ⚠️ Verify these function names match your allAPI.js exactly
+import { getEmergencyContactAPI, getSOSAlertsAPI, getSafetyCheckins } from "../../../Services/allAPI";
 
 const DashboardContent = () => {
-  const [open, setOpen] = useState(false);
+  const [open,           setOpen]           = useState(false);
+  const [loading,        setLoading]        = useState(true);
+  const [contactCount,   setContactCount]   = useState(0);
+  const [sosCount,       setSosCount]       = useState(0);
+  const [checkinCount,   setCheckinCount]   = useState(0);
+  const [checkinsData,   setCheckinsData]   = useState([]);
+  const [lastCheckinDate,setLastCheckinDate] = useState(null);
+  const [activeSosCount, setActiveSosCount] = useState(0);
+  const [contacts,       setContacts]       = useState([]);
 
-  // Mock data for demonstration
-  const emergencyContacts = [
-    { name: "Anugrah", type: "Emergency Contact", phone: "+1 234-567-8900" },
-    { name: "City Police", type: "Helpline", phone: "112" },
-    { name: "Local Hospital", type: "Helpline", phone: "+1 234-567-8901" },
-    { name: "Fire Force", type: "Helpline", phone: "102" },
-  ];
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (!token) { setLoading(false); return; }
+    const reqHeader = {
+      "Content-Type":  "application/json",
+      "Authorization": "Bearer " + token,
+    };
+    fetchAll(reqHeader);
+  }, []);
+
+  async function fetchAll(reqHeader) {
+    setLoading(true);
+
+    // Emergency contacts
+    try {
+      const res = await getEmergencyContactAPI(reqHeader);
+      if (res && res.data) {
+        const arr = Array.isArray(res.data) ? res.data : [];
+        setContactCount(arr.length);
+        setContacts(arr);
+      }
+    } catch (e) {
+      console.error("Contacts error:", e);
+    }
+
+    // SOS alerts — ⚠️ update getSOSAlertsAPI if your function name differs
+    try {
+      const res = await getSOSAlertsAPI(reqHeader);
+      if (res && res.data) {
+        const arr = Array.isArray(res.data) ? res.data : [];
+        setSosCount(arr.length);
+        const active = arr.filter((a) => {
+          const s = (a.status || "").toLowerCase();
+          return s !== "resolved";
+        });
+        setActiveSosCount(active.length);
+      }
+    } catch (e) {
+      console.error("SOS error:", e);
+    }
+
+    // Check-ins — ⚠️ update getSafetyCheckins if your function name differs
+    try {
+      const res = await getSafetyCheckins(reqHeader);
+      if (res && res.data) {
+        const arr = Array.isArray(res.data) ? res.data : [];
+        setCheckinCount(arr.length);
+        setCheckinsData(arr);
+        if (arr.length > 0) {
+          const sorted = [...arr].sort((a, b) => {
+            const da = new Date(a.createdAt || a.date || a.checkInTime || a.timestamp || 0);
+            const db = new Date(b.createdAt || b.date || b.checkInTime || b.timestamp || 0);
+            return db.getTime() - da.getTime();
+          });
+          const latest = sorted[0];
+          setLastCheckinDate(latest.createdAt || latest.date || latest.checkInTime || latest.timestamp || null);
+        }
+      }
+    } catch (e) {
+      console.error("Checkins error:", e);
+    }
+
+    setLoading(false);
+  }
 
   return (
     <LayoutWrapper>
-      <div className="max-w-7xl mx-auto mt-8 space-y-12 px-4 sm:px-6 lg:px-8">
-      {/* Stacked Layout for Smaller Screens */}
-      <div className="flex flex-col gap-4 items-center">
-        {/* Row 1: Welcome Header */}
-        <div className="w-full">
-          <WelcomeHeader />
-        </div>
-        {/* Row 2: SOS Button */}
-        <div className="w-full flex justify-center">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link to={'/alerts'}><Button
-              variant="destructive"
-              size="lg"
-              className="bg-red-600 hover:bg-red-700 px-8 py-6 shadow-lg text-white"
-            >
-              <span className="flex items-center gap-3 text-lg font-bold">
-                <motion.div
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 0, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                  }}
-                >
-                  <BellRing className="h-6 w-6" />
-                </motion.div>
-                SOS ALERT
-              </span>
-            </Button></Link>
-          </motion.div>
-        </div>
-        {/* Row 3: Search Area */}
-        <div className="w-full">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 pt-4 pb-10 space-y-5">
+
+        {/* Hero banner */}
+        <WelcomeHeader />
+
+        {/* Stats strip */}
+        <QuickStats
+          contactCount={contactCount}
+          checkinCount={checkinCount}
+          sosCount={sosCount}
+          loading={loading}
+        />
+
+        {/* Search contacts button
+        <div className="flex justify-end">
           <Button
             variant="outline"
-            className="flex items-center gap-2 w-full sm:w-auto"
+            size="sm"
+            className="flex items-center gap-2 text-sm"
             onClick={() => setOpen(true)}
           >
-            <Search className="h-5 w-5" />
-            <span>Search Contacts</span>
+            <Search className="h-4 w-4" />
+            Search Contacts
           </Button>
+        </div> */}
+
+        {/* Two column: Safety Readiness + Checkin Streak */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <SafetyReadiness
+            contactCount={contactCount}
+            lastCheckinDate={lastCheckinDate}
+            activeSosCount={activeSosCount}
+            loading={loading}
+          />
+          <CheckinStreakWidget
+            checkinsData={checkinsData}
+            loading={loading}
+          />
         </div>
+
+        {/* Search modal */}
+        <CommandDialog open={open} onOpenChange={setOpen}>
+          <CommandInput placeholder="Type contact name or number..." />
+          <CommandList>
+            <CommandEmpty>No contacts found.</CommandEmpty>
+            <CommandGroup heading="Emergency Contacts">
+              {contacts.map((contact) => {
+                const name  = contact.fullname || contact.name || "Unknown";
+                const phone = contact.phone || contact.phoneNumber || "";
+                const key   = name + phone;
+                return (
+                  <CommandItem key={key} className="flex items-center justify-between">
+                    <span>{name}</span>
+                    <span className="text-sm text-muted-foreground">{phone}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
+
       </div>
-
-      <QuickStats />
-      <RecentActivity />
-
-      {/* Search Modal */}
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Type contact name or number..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Emergency Contacts">
-            {emergencyContacts
-              .filter((contact) => contact.type === "Emergency Contact")
-              .map((contact) => (
-                <CommandItem
-                  key={contact.phone}
-                  className="flex items-center justify-between"
-                >
-                  <span>{contact.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {contact.phone}
-                  </span>
-                </CommandItem>
-              ))}
-          </CommandGroup>
-          <CommandGroup heading="Helpline Directory">
-            {emergencyContacts
-              .filter((contact) => contact.type === "Helpline")
-              .map((contact) => (
-                <CommandItem
-                  key={contact.phone}
-                  className="flex items-center justify-between"
-                >
-                  <span>{contact.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {contact.phone}
-                  </span>
-                </CommandItem>
-              ))}
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
-    </div>
     </LayoutWrapper>
   );
 };

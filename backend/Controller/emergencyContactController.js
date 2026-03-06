@@ -1,4 +1,5 @@
 const EmergencyContact = require('../Models/emergencyContactSchema');
+const logActivity = require("../Utils/activityLogger");
 const nodemailer       = require('nodemailer');
 
 const MAX_CONTACTS = 4;
@@ -34,6 +35,12 @@ exports.addEmergencyContact = async (req, res) => {
 
     const newContact = new EmergencyContact({ fullname, phoneNumber, email, userId });
     await newContact.save();
+await logActivity({
+  userId,
+  type: "contact_added",
+  title: "Emergency Contact Added",
+  description: `${newContact.fullname} was added as an emergency contact`,
+});
     res.status(200).json(newContact);
 
   } catch (error) {
@@ -58,6 +65,12 @@ exports.deleteEmergencyContact = async (req, res) => {
   const { contactId } = req.params;
   try {
     const deleted = await EmergencyContact.findByIdAndDelete({ _id: contactId });
+    await logActivity({
+  userId,
+  type: "contact_deleted",
+  title: "Emergency Contact Removed",
+  description: "An emergency contact was removed",
+});
     res.status(200).json(deleted);
   } catch (error) {
     res.status(500).json(error);

@@ -65,6 +65,7 @@ function EmailBreach() {
           breachCount: response.data.found,
           checkedAt: new Date().toISOString()
         });
+        sessionStorage.setItem("lastEmailBreachCheck", new Date().toISOString());
       }
     } catch (err) {
       setError("An error occurred while checking the email. Please try again.");
@@ -78,7 +79,7 @@ function EmailBreach() {
   }
   };
   return (
-    <div className="min-h-screen flex bg-neutral-50">
+    <div className="min-h-screen flex bg-neutral-300/40">
       <DashboardSidebar />
       <main className="flex-1 p-4 md:p-8 overflow-auto pt-14 md:pt-0">
         <motion.div
