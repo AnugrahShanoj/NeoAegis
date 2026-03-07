@@ -1,19 +1,19 @@
 import Navigation from "@/components/landing/Navigation";
 import Hero from "@/components/landing/Hero";
 import AppOverview from "@/components/landing/AppOverview";
-import TrustedBy from "@/components/landing/TrustedBy";
 import Features from "@/components/landing/Features";
+import SafetyNews from "@/components/landing/SafetyNews";
+import TrustedBy from "@/components/landing/TrustedBy";
 import Footer from "@/components/landing/Footer";
-import SafetyNews from "../components/landing/SafetyNews";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-neutral-100">
+    <div className="min-h-screen" style={{ background: "#f5f5f5" }}>
       <Navigation />
       <Hero />
       <AppOverview />
       <Features />
-      <SafetyNews/>
+      <SafetyNews />
       <TrustedBy />
       <Footer />
     </div>
