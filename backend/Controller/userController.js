@@ -75,7 +75,7 @@ exports.googleAuthCallback = async (req, res) => {
     const {email,password}=req.body
     try{
         const existingUser=await users.findOne({email})
-        console.log(existingUser)
+        // console.log(existingUser)
         if(!existingUser){
            return res.status(404).json({message:'User Not Found'})
         }

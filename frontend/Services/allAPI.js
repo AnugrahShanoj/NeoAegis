@@ -111,3 +111,7 @@ export const sendTestAlertAPI = async (reqBody, reqHeader) => {
 export const getActivityLogsAPI = async (reqHeader) => {
   return await commonAPI("get", `${serverUrl}/activity-logs`, null, reqHeader);
 };
+
+// 23 API call for confirming safe (check-in confirmation)
+export const confirmSafeAPI = (checkinId, reqHeader) =>
+  commonAPI("POST", `${serverUrl}/checkins/confirm-safe/${checkinId}`, {}, reqHeader);

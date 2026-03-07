@@ -1,6 +1,8 @@
 const SafetyCheckin = require('../Models/safetyCheckinsSchema');
 const logActivity   = require("../Utils/activityLogger");
 
+const MAX_CHECKINS = 6;
+
 // 1 — Add safety check-in
 exports.addSafetyCheckin = async (req, res) => {
   try {
@@ -10,6 +12,19 @@ exports.addSafetyCheckin = async (req, res) => {
     const timeRegex = /^([01]\d|2[0-3]):00$/;
     if (!timeRegex.test(time)) {
       return res.status(401).json({ message: "Invalid time format. Use HH:00 format." });
+    }
+
+    // ── Limit check — only count active (Pending) check-ins ─────────────
+    const activeCount = await SafetyCheckin.countDocuments({
+      userId,
+      checkInStatus: "Pending",
+      archived:      { $ne: true },
+    });
+
+    if (activeCount >= MAX_CHECKINS) {
+      return res.status(400).json({
+        message: `You can have a maximum of ${MAX_CHECKINS} active check-ins at a time.`,
+      });
     }
 
     const hours       = parseInt(time.split(':')[0], 10);
@@ -42,11 +57,14 @@ exports.addSafetyCheckin = async (req, res) => {
   }
 };
 
-// 2 — Get all check-ins for user
+// 2 — Get all check-ins for user (excludes archived)
 exports.getSafetyCheckins = async (req, res) => {
   const { userId } = req.payload;
   try {
-    const allCheckins = await SafetyCheckin.find({ userId });
+    const allCheckins = await SafetyCheckin.find({
+      userId,
+      archived: { $ne: true },
+    });
     res.status(200).json(allCheckins);
   } catch (error) {
     console.error("Error getting safety check-ins:", error);
@@ -70,10 +88,13 @@ exports.editSafetyCheckin = async (req, res) => {
     const now         = new Date();
     const checkInTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, 0);
 
-    // ✅ ownership check — only update if checkin belongs to this user
     const updatedCheckin = await SafetyCheckin.findOneAndUpdate(
-      { _id: checkinId, userId: userId },
-      { checkInTime, checkInNote: note || "" },
+      { _id: checkinId, userId: userId, archived: { $ne: true } },
+      {
+        checkInTime,
+        checkInNote:           note || "",
+        gracePeriodNotifiedAt: null,
+      },
       { new: true }
     );
 
@@ -96,14 +117,17 @@ exports.editSafetyCheckin = async (req, res) => {
   }
 };
 
-// 4 — Check now (complete a check-in)
+// 4 — Check now (complete within ±15 min window)
 exports.checkNow = async (req, res) => {
   const { checkinId } = req.params;
-  const { userId }    = req.payload; // ✅ now correctly extracted
+  const { userId }    = req.payload;
 
   try {
-    // ✅ ownership check
-    const checkin = await SafetyCheckin.findOne({ _id: checkinId, userId });
+    const checkin = await SafetyCheckin.findOne({
+      _id:      checkinId,
+      userId,
+      archived: { $ne: true },
+    });
 
     if (!checkin) {
       return res.status(404).json({ message: "Check-in not found or access denied." });
@@ -119,7 +143,6 @@ exports.checkNow = async (req, res) => {
       checkin.checkInStatus = "Completed";
       await checkin.save();
 
-      // ✅ time now correctly derived from the saved checkin
       const completedHour = checkin.checkInTime.getHours();
       const timeLabel     = String(completedHour).padStart(2, "0") + ":00";
 
@@ -141,23 +164,78 @@ exports.checkNow = async (req, res) => {
   }
 };
 
-// 5 — Delete a check-in
-exports.deleteSafetyCheckin = async (req, res) => {
+// 5 — Confirm safe (during grace period)
+exports.confirmSafe = async (req, res) => {
   const { checkinId } = req.params;
-  const { userId }    = req.payload; // ✅ now correctly extracted
+  const { userId }    = req.payload;
 
   try {
-    // ✅ ownership check
+    const checkin = await SafetyCheckin.findOne({
+      _id:      checkinId,
+      userId,
+      archived: { $ne: true },
+    });
+
+    if (!checkin) {
+      return res.status(404).json({ message: "Check-in not found or access denied." });
+    }
+
+    if (checkin.checkInStatus !== "Pending") {
+      return res.status(400).json({
+        message: "Check-in is already " + checkin.checkInStatus + ".",
+      });
+    }
+
+    const now      = new Date();
+    const graceEnd = new Date(checkin.checkInTime);
+    graceEnd.setMinutes(graceEnd.getMinutes() + 45);
+
+    if (now > graceEnd) {
+      return res.status(400).json({
+        message: "Grace period has expired. Your emergency contacts have already been notified.",
+      });
+    }
+
+    checkin.checkInStatus = "Completed";
+    await checkin.save();
+
+    const hour      = checkin.checkInTime.getHours();
+    const timeLabel = String(hour).padStart(2, "0") + ":00";
+
+    await logActivity({
+      userId,
+      type:        "checkin",
+      title:       "Safety Confirmed (Late)",
+      description: "Safety confirmed during grace period for check-in at " + timeLabel,
+    });
+
+    return res.status(200).json({
+      message: "You have been marked safe. Your emergency contacts will not be notified.",
+      checkin,
+    });
+
+  } catch (error) {
+    console.error("Error during confirm safe:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// 6 — Delete a check-in
+exports.deleteSafetyCheckin = async (req, res) => {
+  const { checkinId } = req.params;
+  const { userId }    = req.payload;
+
+  try {
     const deleted = await SafetyCheckin.findOneAndDelete({
-      _id:    checkinId,
-      userId: userId,
+      _id:      checkinId,
+      userId:   userId,
+      archived: { $ne: true },
     });
 
     if (!deleted) {
       return res.status(404).json({ message: "Check-in not found or access denied." });
     }
 
-    // ✅ time correctly derived from the deleted document
     const deletedHour = deleted.checkInTime.getHours();
     const timeLabel   = String(deletedHour).padStart(2, "0") + ":00";
 

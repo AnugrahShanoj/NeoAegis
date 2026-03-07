@@ -98,6 +98,9 @@ router.post('/sendTestAlert', jwtMiddlewares, emergencyContactController.sendTes
 // 23 Route for fetching user activity logs
 router.get("/activity-logs", jwtMiddlewares, activityLogController.getActivityLogs);
 
+// 24 Route for confirming safe (check-in confirmation)
+router.post("/checkins/confirm-safe/:checkinId", jwtMiddlewares, safetyCheckinController.confirmSafe);
+
 // Export the router    
 module.exports=router
 
