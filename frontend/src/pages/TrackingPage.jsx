@@ -79,7 +79,7 @@ const TrackingPage = () => {
   useEffect(() => {
     let socket;
 
-    fetch(`${serverUrl}/track/verify/${token}`)
+fetch(`${serverUrl}/api/track/verify/${token}`)
       .then(res => res.json())
       .then(data => {
         if (!data.userId) { setStatusKey('INVALID'); return; }

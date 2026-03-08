@@ -1,61 +1,55 @@
-// Here we implement actual  logic to find or create the user in the database through google authentication
-
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const User = require('../Models/userSchema'); // Import your User Schema
-const jwt=require('jsonwebtoken')
+const User = require('../Models/userSchema');
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID, // From Google Cloud Console
+      clientID:     process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: '/auth/google/callback', // Redirect URI
+      // ✅ Uses BACKEND_URL from .env — never hardcoded
+      callbackURL: `${process.env.BACKEND_URL || 'http://localhost:3000'}/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Check if user already exists
         let user = await User.findOne({ email: profile.emails[0].value });
 
-        // If not, create a new user
         if (!user) {
           user = new User({
-            username: profile.displayName,
-            email: profile.emails[0].value,
+            username:   profile.displayName,
+            email:      profile.emails[0].value,
             profilePic: profile.photos[0]?.value || '',
-            googleId: profile.id, // Save Google ID
-            role: 'user', // Default role
-            paymentStatus:false
+            googleId:   profile.id,
+            role:       'user',
+            paymentStatus: false,
           });
-          console.log("User being saved: ",user)
+          console.log("New Google user being saved:", user.email)
           await user.save();
         }
-        
-        // Pass user object to next middleware, payment status handled in callback
-        return done(null, user); // Pass user data to the next step
+
+        return done(null, user);
       } catch (err) {
-        console.error("Error during google authentication: ",err)
+        console.error("Error during Google authentication:", err)
         return done(err, null);
       }
     }
   )
 );
 
-// Serialize and deserialize user
 passport.serializeUser((user, done) => {
-  console.log("Serializing User Id: ",user.id)
+  console.log("Serializing User Id:", user.id)
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
-    console.log("Deserializing User: ",user)
+    console.log("Deserializing User:", user?.email)
     done(null, user);
   } catch (err) {
-    console.error("Error during deserialization: ",err)
+    console.error("Error during deserialization:", err)
     done(err, null);
   }
 });
 
-module.exports=passport
+module.exports = passport;

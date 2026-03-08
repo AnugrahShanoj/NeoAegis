@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { UserRound, Mail, Lock } from "lucide-react";
 import { registerAPI } from "../../../Services/allAPI";
+import {serverUrl} from "../../../Services/serverURL";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -28,7 +29,6 @@ const SignUp = () => {
 
       if (response.status === 200) {
         const { user } = response.data
-        // ✅ Always overwrite sessionStorage with fresh userId
         sessionStorage.setItem("userId", user.id)
         toast.success(response.data.message, {
           position: "top-center", autoClose: 3000, hideProgressBar: false,
@@ -66,32 +66,27 @@ const SignUp = () => {
     }
   }
 
+  
   const handleGoogleSignUp = () => {
-    window.location.href = "http://localhost:3000/auth/google";
+    window.location.href = `${serverUrl}/auth/google`;
   }
 
   useEffect(() => {
-    // ✅ This handles the case if Google SSO somehow lands back on /sign-up
-    // In normal flow (not paid), backend goes to /payment directly
-    // This is a safety net only
-    const params = new URLSearchParams(window.location.search);
-    const userId     = params.get("userId");
+    const params      = new URLSearchParams(window.location.search);
+    const userId      = params.get("userId");
     const authSuccess = params.get("authSuccess");
-    const token      = params.get("token");
-    const username   = params.get("username");
-    const role       = params.get("role");
+    const token       = params.get("token");
+    const username    = params.get("username");
+    const role        = params.get("role");
 
     if (authSuccess === "true" && userId && token) {
-      // Paid user landed on sign-up — store and go to dashboard
+      // Paid SSO user landed on sign-up — store and redirect to dashboard
       sessionStorage.setItem("userId",   userId);
       sessionStorage.setItem("token",    token);
       sessionStorage.setItem("username", username || "");
       sessionStorage.setItem("role",     role     || "user");
       window.history.replaceState({}, document.title, "/sign-up");
       navigate("/dashboard");
-    } else if (authSuccess === "true" && userId && !token) {
-      // Unpaid Google user — Payment.jsx will handle this
-      // Nothing to do here, /payment redirect is handled by backend
     }
   }, [navigate]);
 

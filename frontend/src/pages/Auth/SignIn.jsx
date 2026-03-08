@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { Shield, Mail, Lock } from "lucide-react";
 import { loginAPI } from "../../../Services/allAPI";
+import {serverUrl} from "../../../Services/serverURL";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
 
@@ -27,11 +28,10 @@ const SignIn = () => {
       console.log(response)
 
       if (response.status === 200) {
-        // ✅ Store all session data including username and role
         sessionStorage.setItem("username", response.data.currentUser.username)
-        sessionStorage.setItem("token", response.data.token)
-        sessionStorage.setItem("userId", response.data.currentUser._id)
-        sessionStorage.setItem("role", response.data.currentUser.role)
+        sessionStorage.setItem("token",    response.data.token)
+        sessionStorage.setItem("userId",   response.data.currentUser._id)
+        sessionStorage.setItem("role",     response.data.currentUser.role)
 
         toast.success("Login Successful", {
           position: "top-center", autoClose: 3000, hideProgressBar: false,
@@ -40,7 +40,6 @@ const SignIn = () => {
         setTimeout(() => { navigate('/dashboard') }, 3000)
 
       } else if (response.status === 406) {
-        // Payment incomplete — store userId for payment page
         sessionStorage.setItem('userId', response.response.data.userId)
         toast.error(response.response.data.message, {
           position: "top-center", autoClose: 3000, hideProgressBar: false,
@@ -61,7 +60,7 @@ const SignIn = () => {
         });
 
       } else {
-        toast.error(response.response.data.message, {
+        toast.error(response.response?.data?.message || "Something went wrong", {
           position: "top-center", autoClose: 3000, hideProgressBar: false,
           closeOnClick: true, pauseOnHover: true, draggable: true, theme: "light",
         });
@@ -71,20 +70,20 @@ const SignIn = () => {
     }
   }
 
+  
   const handleGoogleSignIn = () => {
-    window.location.href = "http://localhost:3000/auth/google";
+    window.location.href = `${serverUrl}/auth/google`;
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const userId    = params.get("userId");
+    const params      = new URLSearchParams(window.location.search);
+    const userId      = params.get("userId");
     const authSuccess = params.get("authSuccess");
-    const token     = params.get("token");
-    const username  = params.get("username");
-    const role      = params.get("role");
+    const token       = params.get("token");
+    const username    = params.get("username");
+    const role        = params.get("role");
 
     if (authSuccess === "true" && userId && token) {
-      // ✅ Store ALL session data — same as manual login
       sessionStorage.setItem("userId",   userId);
       sessionStorage.setItem("token",    token);
       sessionStorage.setItem("username", username || "");
@@ -95,9 +94,7 @@ const SignIn = () => {
         closeOnClick: true, pauseOnHover: true, draggable: true, theme: "light",
       });
 
-      // Clear URL params
       window.history.replaceState({}, document.title, "/sign-in");
-
       setTimeout(() => { navigate("/dashboard"); }, 3000);
     }
   }, [navigate]);
