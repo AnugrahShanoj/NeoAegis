@@ -1,23 +1,51 @@
 import { motion } from "framer-motion";
-const PremiumFeatureCard = ({ icon: Icon, title, description }) => {
+
+const PremiumFeatureCard = ({ icon: Icon, title, description, index }) => {
+  const colors = [
+    { color: "#EA2B1F", bg: "rgba(234,43,31,0.08)", border: "rgba(234,43,31,0.15)" },
+    { color: "#2563eb", bg: "rgba(37,99,235,0.08)",  border: "rgba(37,99,235,0.15)"  },
+    { color: "#16a34a", bg: "rgba(22,163,74,0.08)",  border: "rgba(22,163,74,0.15)"  },
+    { color: "#7c3aed", bg: "rgba(124,58,237,0.08)", border: "rgba(124,58,237,0.15)" },
+  ];
+  const c = colors[index % colors.length];
+
   return (
-    <motion.div 
-      className="p-4 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors relative overflow-hidden group"
-      whileHover={{ scale: 1.02, y: -5 }}
-      initial={{ opacity: 0, y: 20 }}
+    <motion.div
+      className="relative p-5 rounded-2xl overflow-hidden group cursor-default"
+      style={{
+        background: "white",
+        border: `1px solid ${c.border}`,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+        transition: "all 0.25s ease",
+      }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 * (index + 1) }}
+      whileHover={{
+        y: -4,
+        boxShadow: "0 12px 32px rgba(0,0,0,0.1)",
+      }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="relative flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-secondary/10 group-hover:bg-secondary/20 transition-colors">
-          <Icon className="w-5 h-5 text-secondary" />
+      {/* Top accent */}
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: `linear-gradient(90deg, ${c.color}, transparent)` }}
+      />
+
+      <div className="flex items-start gap-3.5">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: c.bg }}
+        >
+          <Icon className="w-5 h-5" style={{ color: c.color }} />
         </div>
         <div>
-          <span className="font-medium text-primary block mb-1">{title}</span>
-          <p className="text-sm text-neutral-600">{description}</p>
+          <p className="font-bold text-neutral-900 text-sm mb-1">{title}</p>
+          <p className="text-xs text-neutral-500 leading-relaxed">{description}</p>
         </div>
       </div>
     </motion.div>
   );
 };
+
 export default PremiumFeatureCard;

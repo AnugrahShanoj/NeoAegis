@@ -70,3 +70,5 @@ serverApp.get('/', (req, res) => {
 httpServer.listen(PORT, () => {
   console.log("NeoAegis Server running on PORT " + PORT);
 });
+
+
