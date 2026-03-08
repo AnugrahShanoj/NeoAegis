@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardSidebar from "@/components/Dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
 import {
   createSOSAlertAPI,

@@ -14,7 +14,7 @@ import {
   SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardSidebar from "@/components/Dashboard/DashboardSidebar";
 import LayoutWrapper from "../components/LayoutWrapper";
 import {
   addSafetyCheckinAPI, checkNowAPI,

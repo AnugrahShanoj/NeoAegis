@@ -1,5 +1,5 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardSidebar from "@/components/Dashboard/DashboardSidebar";
 import ProfileContent from "@/components/profile/ProfileContent";
 
 const Profile = () => {

@@ -2,7 +2,7 @@ import React from 'react'
 import { useState, useEffect } from "react";
 import { Shield, Mail, AlertTriangle, ExternalLink, KeyRound, Lock } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardSidebar from "@/components/Dashboard/DashboardSidebar";
 import  EmailBreachBanner  from "@/components/emailBreach/EmailBreachBanner";
 import  EmailBreachSearch  from "@/components/emailBreach/EmailBreachSearch";
 import  EmailBreachResults  from "@/components/emailBreach/EmailBreachResults";
