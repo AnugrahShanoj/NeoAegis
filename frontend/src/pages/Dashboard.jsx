@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
-import DashboardContent from "@/components/dashboard/DashboardContent";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardContent from "@/components/Dashboard/DashboardContent";
+import DashboardSidebar from "@/components/Dashboard/DashboardSidebar";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
