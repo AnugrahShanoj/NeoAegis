@@ -1,227 +1,175 @@
-# 🛡️ NeoAegis – Personal Safety & Emergency Response Platform
+# 🛡️ NeoAegis — Personal Safety & Emergency Response Platform
 
-A production-oriented full-stack MERN application designed to enhance personal safety through emergency alerts, safety check-ins, breach monitoring, and secure subscription-based access.
+> A production-deployed full-stack MERN application providing real-time emergency alerting, automated safety check-ins, emergency contact management, email breach monitoring and subscription-based access control.
 
-## 📌 Project Overview
+🔗 **Live:** [neoaegis.anugrahshanoj.in](https://neoaegis.anugrahshanoj.in)
 
-NeoAegis is a real-world inspired personal safety platform built to provide rapid emergency assistance and proactive digital security awareness.
+---
 
-The system allows users to:
+## 📌 What is NeoAegis?
 
-- Trigger SOS alerts instantly
-- Manage trusted emergency contacts
-- Schedule automated safety check-ins
-- Verify email exposure in public data breaches
-- Access the application through a secure subscription model
+NeoAegis is a personal safety platform built for real-world use. The idea is simple — if something goes wrong, the people who matter should know immediately and be able to find you.
 
-This project demonstrates secure backend architecture, structured REST API design, payment gateway integration, authentication mechanisms, and scalable MongoDB data modeling.
+The platform allows users to trigger instant SOS alerts with live location tracking, schedule automated safety check-ins that escalate to contacts if missed, manage a trusted emergency contact network, and monitor their digital exposure through email breach detection — all behind a secure subscription-based access model.
 
-## 🏗️ System Architecture Diagram
+This project was built end-to-end — from schema design and API architecture to UI, real-time communication, payment integration and a full production deployment on AWS.
 
-Below is the high-level architecture diagram representing the complete flow of NeoAegis including frontend, backend, database, payment gateway, and external API integrations.
+---
 
-![NeoAegis Architecture Diagram](assets/NeoAegis_Architecture_Diagram.png)
+## 🧠 Tech Stack
 
-## 🗄️ Database Collection Relationship Diagram (MongoDB)
+| Layer | Technologies |
+|---|---|
+| Frontend | React, Vite, Tailwind CSS, Framer Motion, React-Leaflet, Socket.io Client |
+| Backend | Node.js, Express.js, Passport.js, Socket.io, Nodemailer, Node-cron |
+| Database | MongoDB Atlas with Mongoose ODM |
+| Auth | JWT, bcrypt, Google OAuth 2.0 via Passport.js |
+| Payment | Razorpay — order creation + server-side HMAC signature verification |
+| Infrastructure | AWS EC2, Nginx, Certbot (SSL/HTTPS), PM2 |
 
-The following diagram represents the MongoDB collection-level relationships implemented in NeoAegis using application-level referencing via `userId`.
+---
 
-![NeoAegis MongoDB Collection Relationship Diagram](assets/NeoAegis_CRD.png)
+## 🏗️ System Architecture
+
+![NeoAegis Architecture Overview](assets/NeoAegis_Architecture_Diagram.png)
+
+- All incoming traffic hits **Nginx first** — it routes static requests to the React build and API requests to the Node.js backend internally
+- The backend is **not publicly exposed** — only Nginx is accessible from outside
+- Google OAuth is handled under a separate `/auth` route because it is a browser redirect, not an API call
+- HTTP (port 80) automatically redirects to HTTPS (port 443)
+- PM2 keeps the Node.js process alive and auto-restarts on crash or server reboot
+
+---
+
+## ☁️ Production Deployment
+
+| Component | Details |
+|---|---|
+| Cloud Provider | AWS EC2 — t3.micro, Ubuntu 24.04 LTS, Mumbai region |
+| Web Server | Nginx — reverse proxy + static file serving |
+| Process Manager | PM2 — keeps backend alive, auto-restarts on crash or reboot |
+| Database | MongoDB Atlas — cloud hosted, not co-located on EC2 |
+| SSL Certificate | Certbot (Let's Encrypt) — HTTPS enforced, auto-renews every 90 days |
+| Domain | Custom domain via Namecheap — subdomain A record mapped to EC2 public IP |
+| Server Timezone | Configured to Asia/Kolkata (IST) for accurate cron-based scheduling |
+
+---
 
 ## 🚀 Core Features
 
-### 🔐 Secure Authentication
+### 🔐 Authentication & Access Control
+- JWT-based authentication with 7-day token expiry
+- bcrypt password hashing via Mongoose pre-save hook — plain passwords never stored
+- Google OAuth 2.0 Single Sign-On via Passport.js
+- Hybrid login — Google SSO users can optionally set a manual password to enable both login methods
+- Subscription gate — users without an active payment are redirected to the payment page on every access attempt
 
-- JWT-based authentication  
-- Secure password hashing using bcrypt (Mongoose pre-save hook)  
-- Protected API routes using middleware  
-- Google OAuth integration (Single Sign-On support)  
+### 🚨 SOS Alert System
+- One-tap SOS trigger capturing live GPS coordinates via the browser Geolocation API
+- Real-time location streamed to emergency contacts via Socket.io
+- Auto-expiring tokenized tracking links (3-hour validity) delivered instantly by email
+- Tracking link is immediately invalidated the moment the user resolves the alert
+- Alert lifecycle: `Pending → Acknowledged → Resolved`
 
-### 🚨 SOS Emergency System
+### 📅 Safety Check-ins
+- Users schedule recurring check-ins with a custom name and time
+- A grace period window is applied — escalation only fires if the check-in is genuinely missed
+- Automated escalation via Node-cron — all emergency contacts are emailed with a Confirm Safe link if a check-in is missed
+- Contacts can confirm the user is safe directly from the email without logging in
+- Check-in lifecycle: `Pending → Completed → Missed`
 
-- One-tap SOS trigger  
-- Captures user’s current location (latitude, longitude, city)  
-- Stores SOS alert with lifecycle status tracking  
-- Sends alert notifications to saved emergency contacts  
-- Status flow: Pending → Acknowledged → Resolved  
+### 👥 Emergency Contact Management
+- Add and manage up to 4 trusted emergency contacts per user
+- Test alert feature — sends a real email to verify delivery before any emergency
+- All contact data is scoped strictly to the authenticated user
 
-### 🔔 Smart Safety Check-Ins
+### 🔍 Email Breach Detection
+- Checks the user's registered email against global data breach databases via an external API
+- Returns breach source, date, and type of data exposed (passwords, phone numbers, etc.)
+- Promotes proactive digital security awareness
 
-- Users can schedule safety check-ins  
-- Stores check-in time and optional note  
-- Tracks status lifecycle: Pending → Completed → Missed  
-- Missed check-ins trigger escalation handling logic  
-
-### 📞 Emergency Contact Management
-
-- Add, remove, and manage trusted contacts  
-- Phone number and email validation  
-- Contacts securely mapped to authenticated user  
-- User-level data isolation  
-
-### 🔍 Email Breach Check (Cybersecurity Awareness Feature)
-
-- Users can verify whether their email has appeared in known public data breaches  
-- Integrated with external breach intelligence API  
-- Encourages proactive digital security monitoring  
-- Demonstrates secure third-party API consumption  
-
-### 💳 Mandatory Subscription Access (Razorpay Integration)
-
-NeoAegis operates on a subscription-based access model.
-
-- Every user must complete subscription to access the application  
-- Secure Razorpay payment gateway integration  
-- Backend order creation and verification  
-- Signature validation for payment authenticity  
-- Payment status stored in user schema (`paymentStatus`, `paymentId`)  
-
-There are no premium tiers or feature differences — subscription is required for full platform access.
-
-## 🧠 Technology Stack
-
-### 🖥️ Frontend
-
-- React.js  
-- Tailwind CSS  
-- React Router  
-- Axios  
-- Geolocation API  
-
-### ⚙️ Backend
-
-- Node.js  
-- Express.js  
-- MongoDB  
-- Mongoose ODM  
-- JWT Authentication  
-- Razorpay SDK  
-
-## 🏗️ Architecture & Design Approach
-
-- Stateless authentication using JWT  
-- Middleware-driven request validation  
-- Modular controller-based structure  
-- Environment-based configuration management  
-- Secure hashing and authentication workflow  
-- Clean separation between routes, controllers, models, and middleware  
-- Scalable MongoDB schema design  
-- Secure integration of third-party APIs  
-
-## 📂 Project Structure
-
-```bash
-NeoAegis/
-│
-├── backend/
-│   ├── Controllers/
-│   ├── Models/
-│   │   ├── userSchema.js
-│   │   ├── emergencyContactSchema.js
-│   │   ├── safetyCheckinsSchema.js
-│   │   └── sosAlertSchema.js
-│   ├── Routes/
-│   ├── Middlewares/
-│   ├── Utils/
-│   ├── index.js
-│   └── configuration files
-│
-├── frontend/
-│   ├── src/
-│   │   ├── Components/
-│   │   ├── Pages/
-│   │   ├── Services/
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│
-├── assets/
-│   └── neoAegis-architecture.png
-│
-└── README.md
-```
-
-## 🛡️ Security Implementation
-
-- bcrypt password hashing using Mongoose pre-save hook  
-- JWT authentication middleware for protected routes  
-- Secure Razorpay payment signature verification  
-- Input validation for user and contact data  
-- Environment variable protection  
-- Controlled API access based on `paymentStatus`  
-- Secure Google OAuth handling with unique `googleId`  
+### 💳 Subscription & Payment
+- Razorpay payment gateway with backend order creation
+- Server-side HMAC signature verification ensures payment authenticity
+- Payment status persisted in user schema — gates access to the entire platform
+- One-time activation model — no recurring charges
 
 ---
 
 ## 🗄️ Database Design
 
-### 👤 Users Collection (`userSchema.js`)
+![NeoAegis Database Collection Relationship Diagram](assets/NeoAegis_CRD.png)
 
-Fields included in the schema:
+All collections reference `userId` for strict user-level data isolation. Relationships are handled at the application level using MongoDB referencing — no joins.
 
-- username  
-- email  
-- password  
-- role  
-- paymentStatus  
-- paymentId  
-- isActive  
-- profilePic  
-- googleId  
-- gender  
-- dateOfBirth  
-- createdAt  
+### Users
+```
+_id, username, email, password (bcrypt), role, googleId,
+paymentStatus, paymentId, profilePic, gender, dateOfBirth,
+isActive, createdAt
+```
 
----
+### EmergencyContacts
+```
+_id, userId (ref → Users), fullname, email, phoneNumber, createdAt
+```
+Max 4 contacts per user — enforced at API level.
 
-### 📞 Emergency Contacts Collection (`emergencyContactSchema.js`)
+### SOSAlerts
+```
+_id, userId (ref → Users), location { latitude, longitude, city },
+message, status, trackingToken, tokenExpiresAt, createdAt
+```
+`status: "Pending" | "Acknowledged" | "Resolved"`  
+Tracking token auto-invalidated on resolve.
 
-Fields included in the schema:
-
-- fullname  
-- phoneNumber  
-- email  
-- userId  
-- createdAt  
-
----
-
-### 🔔 Safety Check-Ins Collection (`safetyCheckinsSchema.js`)
-
-Fields included in the schema:
-
-- checkInTime  
-- checkInNote  
-- checkInStatus  
-- userId  
-- createdAt  
+### SafetyCheckins
+```
+_id, userId (ref → Users), checkInName, checkInTime,
+checkInNote, checkInStatus, createdAt
+```
+`checkInStatus: "Pending" | "Completed" | "Missed"`  
+Missed check-ins trigger automated escalation via Node-cron.
 
 ---
 
-### 🚨 SOS Alerts Collection (`sosAlertSchema.js`)
+## 🛡️ Security Implementation
 
-Fields included in the schema:
-
-- userId  
-- location (latitude, longitude, city)  
-- message  
-- status  
-- timestamp  
-- createdAt  
+| Measure | How |
+|---|---|
+| HTTP Security Headers | Helmet.js applied on all API responses |
+| Brute Force Protection | Rate limiting on login and registration endpoints |
+| JWT Verification | Middleware validates token on every protected route |
+| Password Storage | bcrypt hashing — never stored in plain text |
+| Payment Integrity | Server-side Razorpay HMAC signature validation |
+| CORS | Restricted to the production frontend domain only |
+| OAuth Security | Passport.js with secure server-side session handling |
+| SSL/HTTPS | Let's Encrypt via Certbot — enforced at Nginx level |
 
 ---
 
-## 🎯 Engineering Highlights
+## 📂 Project Structure
 
-- Clean REST API architecture  
-- Secure authentication workflow  
-- Razorpay payment gateway integration  
-- External breach intelligence API integration  
-- Automated safety check escalation logic  
-- Structured MongoDB schema modeling  
-- Robust validation and middleware handling  
+```
+NeoAegis/
+├── backend/
+│   ├── index.js
+│   ├── Routes/
+│   ├── Controller/
+│   ├── Model/
+│   ├── Middleware/
+│   ├── Config/
+│   └── Uploads/
+├── frontend/
+│   └── src/
+│       ├── pages/
+│       ├── components/
+│       └── Services/      
+└── assets/
+```
 
 ---
 
 ## 📄 License
 
-This project is developed for portfolio and educational purposes.
+Developed for portfolio purposes. All rights reserved.
